@@ -1,0 +1,13 @@
+Function chains: A different way to view math
+
+Math is moving and changing numbers around (Side note: computer is moving and changing data around. Can you see it yet?). It is filled with functions. We chain these functions in some order. Often we use these function chains to describe behavior. This described behavior can be  used to predict new behavior or create the behavior; but these are just additional ways of describing the same inherent design when we try to describe it in terms of its utility. 
+
+Someone on stackexchange wrote "it's hard for today's student to imagine what life was like before calculators were invented. Yes, to multiply two numbers with more than two digits or so, people wwould often use tables of logarithms." 
+
+Math is no longer a grab bag of equations. It's a formulaic approach to manipulating numbers that are describing some thing. Its methods were invented to change the numbers in some way. There was a progression to their release. They had a purpose. New ones used old ones.
+
+For example, John Napier invented logarithms in 1614 to simplify multiplication of large numbers because log of xy where x and y are very large, simplifies to log of x plus the log of y. We replace multiplication with addition. More intricate properties like it being the integral of the inverse function came later. Another neat property is that if you expect a predictor variable to follow a power/exponential law, the log will linear the relationship. We even see it when using matplotlib or other graphing. It reduces the scale of very large number-ed x and y axes. 
+
+
+Sources:
+https://math.stackexchange.com/questions/35810/intuitive-use-of-logarithms 
