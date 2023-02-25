@@ -12,6 +12,7 @@ torch-vision = "*"
 pillow = "*"
 matplotlib = "*"
 torchvision = "*"
+torchsummary = "*"
 
 [dev-packages]
 
