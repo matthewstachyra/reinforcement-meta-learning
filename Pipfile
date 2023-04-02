@@ -13,6 +13,7 @@ pillow = "*"
 matplotlib = "*"
 torchvision = "*"
 torchsummary = "*"
+scikit-learn = "*"
 
 [dev-packages]
 
