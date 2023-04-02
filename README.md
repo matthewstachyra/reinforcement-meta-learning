@@ -1,1 +1,1 @@
-# RL-NN-chaining-solver
+# Meta-learner-RL-for-CNN
