@@ -1,7 +1,8 @@
 import torch
 import torch.nn as nn
 import numpy as np
-from utils import v_wrap, set_init, push_and_pull, record
+from utils import convert_to_float_and_tensor, \
+                  init_layers_with_normal_dist, update_global_network_params, record
 import torch.nn.functional as F
 import torch.multiprocessing as mp
 from shared_adam import SharedAdam
@@ -84,6 +85,11 @@ class A3C(nn.Module):
                   s: gym.Sequence[int], 
                   a :np.ndarray, 
                   v_t: np.ndarray) -> np.ndarray:
+        # 'nn.Module' is put into 'train' mode
+        # this controls the behavior of certain layers like
+        # dropout and batch norm. For example, dropout is
+        # disabled in 'eval' mode. 'Eval' mode is the same
+        # as train(False) or setting 'train' mode to false.
         self.train()
         mu, sigma, values = self.forward(s)
 
@@ -178,6 +184,6 @@ class Worker(mp.Process):
                     if done: 
                         record(self.g_ep,
                                self.g_ep_r,
-                               ep_rr,
+                               ep_r,
                                self.res_queue,
                                self.name)
