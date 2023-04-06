@@ -2,7 +2,8 @@ import torch
 import torch.nn as nn
 import numpy as np
 from utils import convert_to_float_and_tensor, \
-                  init_layers_with_normal_dist, update_global_network_params, record
+                  init_layers_with_normal_dist, \
+                  update_global_network_params, record
 import torch.nn.functional as F
 import torch.multiprocessing as mp
 from shared_adam import SharedAdam
@@ -45,7 +46,7 @@ class A3C(nn.Module):
 
         # helper function to initialize the weights of the layers
         # uses normal distribution
-        set_init([self. a1, self.mu, self.sigma, self.c1, self.v])
+        init_layers_with_normal_dist([self. a1, self.mu, self.sigma, self.c1, self.v])
 
         self.distribution = torch.distributions.Normal
 
@@ -152,7 +153,7 @@ class Worker(mp.Process):
 
                 # v_wrap is a utility function that converts
                 # the numpy array to a tensor
-                a = self.lnet.choose_action(v_wrap(s[None, :]))
+                a = self.lnet.choose_action(convert_to_float_and_tensor(s[None, :]))
 
                 # we clip the action beceause Gaussian distribution
                 # isn't bounded. This way we keep it in a valid range
@@ -171,15 +172,14 @@ class Worker(mp.Process):
                 
                 if total_step % UPDATE_GLOBAL_ITER==0 or done: 
                     # sync local networks up to the global network
-                    push_and_pull(self.opt, 
-                                  self.lnet, 
-                                  self.gnet, 
-                                  done, 
-                                  s_, 
-                                  buffer_s, 
-                                  buffer_a,
-                                  buffer_r,
-                                  GAMMA)
+                    update_global_network_params(self.opt, 
+                                                 self.lnet, 
+                                                 self.gnet, 
+                                                 done, s_, 
+                                                 buffer_s, 
+                                                 buffer_a,
+                                                 buffer_r, 
+                                                 GAMMA)
                     
                     if done: 
                         record(self.g_ep,
@@ -187,3 +187,39 @@ class Worker(mp.Process):
                                ep_r,
                                self.res_queue,
                                self.name)
+                
+                s = s_total step += 1
+        
+        self.res_queue.put(None)
+
+if __name__ == "__main__":
+    gnet = A3C(N_S, N_A)
+    gnet.share_memory()
+    opt = SharedAdam(gnet.parameters(), lr=1e-4, betas=(0.95, 0.999))
+
+    global_ep = mp.Value('i', 0)  
+    global_ep_r = mp.Value('d', 0.)
+    res_queue = mp.Queue()
+
+    # train workers in parallel
+    workers = [Worker(gnet, 
+                      opt,
+                      global_ep,
+                      global_ep_r,
+                      res_queue,
+                      i)
+               for i in range(mp.cpu_count())]
+    [w.start() for w in workers]
+    while True:
+        r = res_queue.get()
+        if r is not None:
+            res.append(r)
+        else:
+            break
+        [w.join() for w in workers]
+
+        import matplotlib.pyplot as plt
+        plt.plot(res)
+        plt.ylabel('Moving average ep reward')
+        plt.xlabel('Step')
+        plt.show()
