@@ -1,0 +1,33 @@
+Research questions
+	How do you build a neural network?
+	How do you train a neural network?
+		Use an RL agent. Its state space is the output of different parts of the architecture along the feedforward pass. Its action space is layers amenable to the dimensionality at these different points in the architecture. It outputs a layer for each component of the architecture.
+	How do you transfer learning from one network to another?
+		Keep the layers that are used to build a target network for a task. Reuse these layers (make them accessible for new tasks). The RL agent will find these layers and resuse them.
+	How do you use information on how the network learned?
+	How do you handle novelties in rl tasks?
+
+MetaNet
+	rollout initial model architecture
+		-> for images, building cnn (cifar dataset)
+		-> for mdps, building policy (atari, pong datsets)
+	use metadata (how the network learned) to do introspection
+		-> view available data
+		-> use data to handle novelty (e.g., a state not in one of the policies learned)
+
+
+
+research papers to focus on
+	meta learning
+	transfer learning
+	neural network introspection
+	neural network metadata
+	imitation learning
+
+
+
+
+
+
+
+

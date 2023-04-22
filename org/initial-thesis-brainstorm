@@ -1,0 +1,38 @@
+**neural networks in an embedding space
+***learn from watching images / videos
+	e.g., different images of going around a maze
+
+***mdp solver - when to learn
+	reinforcement learning to traverse behavior tree, where each node is either a task (mdp) or a pass state
+	what if states represented some behavior tree
+	what if an agent's life was represented as acting or learning to act
+		so it answers the question of whether it knows how or whether it needs to learn
+		it answers whether it knows how to proceed by simulating behavior and getting the reward
+	but is this an algorithm or is this a system - it seems more like a system
+	can i solve a gridworld with it - what if its a gridworld with a gridworld in it (a world were you come across
+		tasks that you need to solve)
+	state 0 is 'do i know' + <mdp>
+		action 0 is 'yes'
+		action 1 is 'no'
+	state 1 is 'act, because i know' + <mdp>
+		action 0 is 'act'
+		action 1 is 'don't act, go back to state 0'
+	state 2 is 'learn, because i don't know' + <mdp>
+		action 0
+		action 1
+	state 3 is 'explore what tasks are out there'
+		can we go back to state 0 then?
+
+
+***??? - how to learn
+	reinforcement learning to decide whether this requires (1) supervised learning or (2) reinforcement learning
+	then how to optimize neural network
+	actions can be
+		add or remove hidden layers
+		increase or decrease learning rate
+		change the type of task (e.g., multilabel classification vs. binary classification vs. regression)
+
+
+ground symbolic in the non-symbolic? merge connectionist and symbolic approaches
+
+look into RL used to choose neural architecture or to explore hyperparamters
