@@ -1,14 +1,21 @@
-from ray import tune
-from ray.rllib.algorithms.a3c import A3CConfig
+import gymnasium as gym
 
-config = A3CConfig() 
-config = config.training(lr=0.01, grad_clip=30.0) 
-config = config.resources(num_gpus=0) 
-config = config.rollouts(num_rollout_workers=4) 
-config = config.environment("CartPole-v1") 
-
-print(config.to_dict())  
+from stable_baselines3 import A2C
+from stable_baselines3.common.env_util import make_vec_env
 
 if __name__ == "__main__":
-    algo = config.build()  
-    algo.train()  
+    env = make_vec_env("CartPole-v1", n_envs=4)
+
+    model = A2C("MlpPolicy", env, verbose=1)
+    model.learn(total_timesteps=25000)
+    model.save("a2c_cartpole")
+
+    del model # remove to demonstrate saving and loading
+
+    model = A2C.load("a2c_cartpole")
+
+    obs = env.reset()
+    while True:
+        action, _states = model.predict(obs)
+        obs, rewards, dones, info = env.step(action)
+        env.render()
