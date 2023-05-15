@@ -18,6 +18,7 @@ gym = "*"
 typing = "*"
 nptyping = "*"
 tensorflow = "*"
+tqdm = "*"
 
 [dev-packages]
 
