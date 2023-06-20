@@ -1,5 +1,0 @@
-Log
-* Inverse function to exponentiation.
-* log_b(x) is what exponent do we need to raise b (the base) to, to get x. So b^?=x where ? is the unknown value.
-* log_10(1000)=3 becuase if we do 10^3 we get 1000.
-* log(x), where x is the number of nodes, represents the height, in terms of number of levels, of a binary tree.
