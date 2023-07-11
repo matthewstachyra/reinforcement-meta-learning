@@ -1,0 +1,141 @@
+import os
+import datetime
+import copy
+import torch
+from torch.nn import Module
+import tqdm
+import numpy as np 
+import gym
+from gym import Env
+from gym.spaces import Box
+from gym .utils.env_checker import check_env
+from typing import (
+    OrderedDict,
+    List,
+    Tuple,
+    Callable,
+)
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+import stable_baselines3
+from stable_baselines3 import A2C
+from stable_baselines3.common.env_checker import check_env
+
+
+def build_model():
+    return torch.nn.Sequential(
+        torch.nn.Linear(1, 24),
+        torch.nn.ReLU(),
+        torch.nn.Linear(24, 24), # hidden layer 1
+        torch.nn.ReLU(),
+        torch.nn.Linear(24, 24), # hidden layer 2
+        torch.nn.ReLU(),
+        torch.nn.Linear(24, 1)
+    )
+
+def save_model(model: torch.nn.Module,path: str) -> None:
+    torch.save(model.state_dict(), path)
+
+def load_model(model: torch.nn.Module, path: str) -> torch.nn.Module:
+    model.load_state_dict(torch.load(path))    
+    
+def split_data(X: np.ndarray,
+               y: np.ndarray) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+    # wraps sklearn's train_test_split
+    # added functionality is converting to torch tensor type and reshaping
+    X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.7, shuffle=True)
+    X_train = torch.tensor(X_train, dtype=torch.float32)
+    y_train = torch.tensor(y_train, dtype=torch.float32).reshape(-1, 1)
+    X_test = torch.tensor(X_test, dtype=torch.float32)
+    y_test = torch.tensor(y_test, dtype=torch.float32).reshape(-1, 1)
+    return X_train, y_train, X_test, y_test
+
+def train_regression_model(model: torch.nn.Module,
+                           opt: torch.optim,
+                           X_train: torch.Tensor, 
+                           y_train: torch.Tensor, 
+                           X_test: torch.Tensor, 
+                           y_test: torch.Tensor, 
+                           n_epochs: int=500, 
+                           batch_size: int=1,
+                           show_progress: bool=True) -> Tuple[List[torch.Tensor], 
+                                                              List[torch.Tensor], 
+                                                              float, 
+                                                              OrderedDict[str, torch.tensor]]:
+    loss_fn = torch.nn.MSELoss()
+    best_mse = np.inf
+    best_weights = None
+    loss_history = []
+    prediction_history = []
+    
+    ##############
+    # 500 epochs 
+    ##############
+    for epoch in range(n_epochs):
+        # train model on batches (which here is just a singular value)
+        model.train()
+        ################
+        # 100 samples 
+        ################
+        if show_progress:
+            pbar = tqdm.tqdm(total=len(X_train))
+            pbar.set_description(f"Epoch {epoch}")
+        for batch_index in range(round(len(X_train)/batch_size)):
+            ################
+            # 1 sample at a time (batch size = 1)
+            ################
+            X_batch = X_train[batch_index : batch_index + batch_size]
+            y_batch = y_train[batch_index : batch_index + batch_size]
+
+            # forward pass
+            y_pred = model(X_batch)
+            
+            loss = loss_fn(y_pred, y_batch)
+
+            # update weights via backprop
+            opt.zero_grad()
+            loss.backward()
+            opt.step()
+
+            if show_progress: pbar.update(10)
+        if show_progress: pbar.close()
+
+        # evaluate accuracy at end of each epoch
+        model.eval()
+        y_pred = model(X_test)
+        mse = loss_fn(y_pred, y_test)
+        mse = float(mse)
+        loss_history.append(mse)
+        prediction_history.append(y_pred)
+        if mse < best_mse:
+            best_mse = mse
+            best_weights = copy.deepcopy(model.state_dict())
+    
+    return prediction_history, loss_history, best_mse, best_weights
+
+def predict_from_composed_layers(layers, X=np.linspace(-2,2,100)):
+    y_hats = []
+    for x in X:
+        x = torch.Tensor([x])
+        for i in range(len(layers)-1):
+            x = torch.nn.functional.relu(layers[i](x))
+        x = layers[-1](x) # do not relu the very last calculation
+        y_hats.append(x)
+    return y_hats
+
+def predict(model: torch.nn.Module, X: torch.Tensor) -> List[torch.Tensor]:
+    # function to get yhat from target network
+    return [model(torch.tensor(sample).float()) 
+            for sample in X.reshape((N,1))]
+
+def plot_predictions_versus_ground(X: torch.Tensor, 
+                                   y: torch.Tensor, 
+                                   y_hat: torch.Tensor,
+                                   plot_title: str="line fit") -> None:
+
+    # function to plot predicted curve versus actual curve
+    # assumes x and y are both numpy arrays
+    # assumes y_hat is generated by make_predictions()
+    plt.plot(X, y)
+    plt.plot(X, np.array([_.detach().numpy() for _ in y_hat]));
+    plt.title(plot_title)
