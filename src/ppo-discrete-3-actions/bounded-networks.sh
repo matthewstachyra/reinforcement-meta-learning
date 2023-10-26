@@ -12,4 +12,4 @@
 
 module load anaconda/2023.07
 conda activate mthesis
-python bounded.networks.py
+python bounded-networks.py

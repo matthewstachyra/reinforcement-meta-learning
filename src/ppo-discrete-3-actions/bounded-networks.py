@@ -32,8 +32,8 @@ from torch.utils.tensorboard import SummaryWriter
 config = {
     'SEED' : 41,
     'DEVICE' : 'cuda',
-    'EPOCHS' : 1,
-    'TIMESTEPS' : 5000,
+    'EPOCHS' : 20,
+    'TIMESTEPS' : 20000,
     'N_X' : 100,
     'N_TASKS' : 5,
     'IN_FEATURES' : 1,
