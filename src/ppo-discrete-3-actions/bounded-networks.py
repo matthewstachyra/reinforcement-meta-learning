@@ -51,7 +51,7 @@ default_config = {
     'action_cache_size' : 5,
     'num_workers' : 0,
     'loss_fn' : torch.nn.MSELoss(),
-    'sb3_model' : RecurrentPPO,
+    'sb3_model' : 'RecurrentPPO',
     'sb3_policy' : 'MlpLstmPolicy',
     'log_dir' : 'runs',
     }
@@ -61,6 +61,8 @@ parser.add_argument('--epochs', '-e', type=int, default=default_config['epochs']
 parser.add_argument('--timesteps', '-t', type=int, default=default_config['timesteps'], help='Timesteps', required=False)
 parser.add_argument('--sb3_model', '-m', type=str, default=default_config['sb3_model'], help='SB3 model to use', required=False)
 parser.add_argument('--sb3_policy', '-p', type=str, default=default_config['sb3_policy'], help='SB3 policy to use', required=False)
+parser.add_argument('--log_dir', '-o', type=str, default=default_config['log_dir'], help='Directory to save tensorboard logs', required=False)
+
 parser.add_argument('--n_tasks', type=int, default=default_config['n_tasks'], help='Number of tasks to generate', required=False)
 parser.add_argument('--n_layers_per_network', type=int, default=default_config['n_layers_per_network'], help='Number of layers per network', required=False)
 args = parser.parse_args()
@@ -97,6 +99,7 @@ tasks_info = [
          for _ in X]
         for i, (a, p) in enumerate(zip(amps, phases))
 ]
+print(f'[INFO] Tasks created.')
 
 class RegressionModel(torch.nn.Module):
     def __init__(self):
@@ -119,8 +122,8 @@ layers = []
 data = []
 for x, y in zip(tasks_data, tasks_targets):
     data.append([x,y])
-fig, axs = plt.subplots(5, 2, figsize=(12, 15))
 for i, (x, y) in enumerate(data):
+    print(f'[INFO] Task {i+1} layers are pre-initialized.')
     model = RegressionModel()
     criterion = torch.nn.MSELoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
@@ -135,24 +138,10 @@ for i, (x, y) in enumerate(data):
         loss.backward()
         optimizer.step()
     
-    # get predicitons to graph
-    model.eval()
-    with torch.no_grad():
-        outputs = model(x.view(-1, 1))
-        test_loss = criterion(outputs, y.view(-1, 1))
-
-    # graph truth vs. predictions
-    row = i // 2
-    col = i % 2
-    axs[row, col].plot(x, y, label=f'Dataset {i + 1} (Actual)', linestyle='--', alpha=0.6)
-    axs[row, col].plot(x, outputs.numpy(), label=f'Dataset {i + 1} (Predicted)')
-    axs[row, col].set_title(f'Dataset {i + 1}')
-    axs[row, col].legend()
-
     # save layers for layer pool
     layers.extend(model.layers)
 
-print(f'[INFO] Layers pre-intialized on tasks.')
+print(f'[INFO] Layers pre-initialized on tasks.')
 
 class Layer:
     def __init__(self, 
@@ -458,7 +447,7 @@ class REML:
         ):
         self.layer_pool = layer_pool
         self.tasks = tasks
-        self.model = model
+        self.model = PPO if model=='PPO' else RecurrentPPO
         self.policy = policy
         self.epochs = epochs
         self.timesteps = timesteps

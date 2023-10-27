@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH -J initial-bounded-networks-run     # job name
+#SBATCH -J bounded-networks-mlp-policy      # job name
 #SBATCH --time=00-08:00:00                  # requested time (DD-HH:MM:SS)
 #SBATCH -p gpu --gres=gpu:p100:1            # partition
 #SBATCH -N 1                                # 1 nodes
@@ -12,4 +12,4 @@
 
 module load anaconda/2023.07
 conda activate mthesis
-python bounded-networks.py
+python bounded-networks.py --sb3_model='PPO' --sb3_polcy='MlpPolicy'
