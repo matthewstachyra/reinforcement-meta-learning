@@ -1,3 +1,4 @@
+import argparse
 import math
 import random
 import datetime
@@ -9,12 +10,12 @@ import torch.nn.functional as F
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
 from torch.nn import Module
-import gymnasium as gym
-from gym import Env
+import gymnasium
+from gymnasium import Env
 from sklearn.model_selection import train_test_split
-from gym.spaces.box import Box
-from gym.spaces.discrete import Discrete
-from gym.utils.env_checker import check_env
+from gymnasium.spaces.box import Box
+from gymnasium.spaces.discrete import Discrete
+from gymnasium.utils.env_checker import check_env
 from typing import (
     Type,
     OrderedDict,
@@ -29,50 +30,60 @@ from stable_baselines3 import PPO
 from stable_baselines3.common.env_checker import check_env
 from torch.utils.tensorboard import SummaryWriter
 
-config = {
-    'SEED' : 41,
-    'DEVICE' : 'cuda',
-    'EPOCHS' : 20,
-    'TIMESTEPS' : 20000,
-    'N_X' : 100,
-    'N_TASKS' : 5,
-    'IN_FEATURES' : 1,
-    'OUT_FEATURES' : 1,
-    'POOL_N_LAYERS' : 30,
-    'N_LAYERS_PER_NETWORK' : 5,
-    'N_NODES_PER_LAYER' : 32,
-    'POOL_LAYER_TYPE' : torch.nn.Linear,
-    'ACTION_SPACE_SHAPE' : (3,),
-    'EPSILON' : 0.1,
-    'BATCH_SIZE' : 1,
-    'LEARNING_RATE' : 0.01,
-    'ACTION_CACHE_SIZE' : 5,
-    'NUM_WORKERS' : 0,
-    'LOSS_FN' : torch.nn.MSELoss(),
-    'SB3_MODEL' : RecurrentPPO,
-    'SB3_POLICY' : 'MlpLstmPolicy',
-    'LOG_DIR' : 'runs',
+# configuration
+default_config = {
+    'seed' : 41,
+    'device' : 'cuda',
+    'epochs' : 20,
+    'timesteps' : 20000,
+    'n_x' : 100,
+    'n_tasks' : 5,
+    'in_features' : 1,
+    'out_features' : 1,
+    'pool_n_layers' : 30,
+    'n_layers_per_network' : 5,
+    'n_nodes_per_layer' : 32,
+    'pool_layer_type' : torch.nn.Linear,
+    'action_space_shape' : (3,),
+    'epsilon' : 0.1,
+    'batch_size' : 1,
+    'learning_rate' : 0.01,
+    'action_cache_size' : 5,
+    'num_workers' : 0,
+    'loss_fn' : torch.nn.MSELoss(),
+    'sb3_model' : RecurrentPPO,
+    'sb3_policy' : 'MlpLstmPolicy',
+    'log_dir' : 'runs',
     }
-config
+parser = argparse.ArgumentParser(description="REML command line")
+parser.add_argument('--device', '-d', type=str, default=default_config['device'], help='Device to run computations', required=False)
+parser.add_argument('--epochs', '-e', type=int, default=default_config['epochs'], help='Epochs', required=False)
+parser.add_argument('--timesteps', '-t', type=int, default=default_config['timesteps'], help='Timesteps', required=False)
+parser.add_argument('--sb3_model', '-m', type=str, default=default_config['sb3_model'], help='SB3 model to use', required=False)
+parser.add_argument('--sb3_policy', '-p', type=str, default=default_config['sb3_policy'], help='SB3 policy to use', required=False)
+parser.add_argument('--n_tasks', type=int, default=default_config['n_tasks'], help='Number of tasks to generate', required=False)
+parser.add_argument('--n_layers_per_network', type=int, default=default_config['n_layers_per_network'], help='Number of layers per network', required=False)
+args = parser.parse_args()
+config = { key : getattr(args, key, default_value) for key, default_value in default_config.items() }
+print(f'[INFO] Config={config}')
 
 # create tasks
-# (20, 100) shape
 lower_bound = torch.tensor(-5).float()
 upper_bound = torch.tensor(5).float()
-X = np.linspace(lower_bound, upper_bound, config['N_X'])
+X = np.linspace(lower_bound, upper_bound, config['n_x'])
 amplitude_range = torch.tensor([0.1, 5.0]).float()
 phase_range = torch.tensor([0, math.pi]).float()
-amps = torch.from_numpy(np.linspace(amplitude_range[0], amplitude_range[1], config['N_TASKS'])).float()
-phases = torch.from_numpy(np.linspace(phase_range[0], phase_range[1], config['N_TASKS'])).float()
-tasks_data = torch.tensor([ 
+amps = torch.from_numpy(np.linspace(amplitude_range[0], amplitude_range[1], config['n_tasks'])).float()
+phases = torch.from_numpy(np.linspace(phase_range[0], phase_range[1], config['n_tasks'])).float()
+tasks_data = torch.tensor(np.array([ 
         X
-        for _ in range(config['N_TASKS'])
-        ]).float()
-tasks_targets = torch.tensor([
+        for _ in range(config['n_tasks'])
+        ])).float()
+tasks_targets = torch.tensor(np.array([
         [((a * np.sin(x)) + p).float()
         for x in X] 
         for a, p in zip(amps, phases)
-        ]).float()
+        ])).float()
 tasks_info = [
         [{'i' : i, 
          'amp' : a, 
@@ -108,10 +119,6 @@ layers = []
 data = []
 for x, y in zip(tasks_data, tasks_targets):
     data.append([x,y])
-print(config)
-print()
-print(len(data))
-print(len(data[0]))
 fig, axs = plt.subplots(5, 2, figsize=(12, 15))
 for i, (x, y) in enumerate(data):
     model = RegressionModel()
@@ -145,9 +152,11 @@ for i, (x, y) in enumerate(data):
     # save layers for layer pool
     layers.extend(model.layers)
 
+print(f'[INFO] Layers pre-intialized on tasks.')
+
 class Layer:
     def __init__(self, 
-                params: Type[torch.nn.Linear]=config['POOL_LAYER_TYPE']):
+                params: Type[torch.nn.Linear]=config['pool_layer_type']):
         self.params = params
         self.used = False
         self.times_used = 0
@@ -155,11 +164,11 @@ class Layer:
 class LayerPool:
     # pool of uniform Layer objects each with the same type and shape
     def __init__(self, 
-                size: int=config['POOL_N_LAYERS'], 
-                layer_type: Type[torch.nn.Linear]=config['POOL_LAYER_TYPE'],
-                in_features: int=config['IN_FEATURES'],
-                out_features: int=config['OUT_FEATURES'],
-                num_nodes_per_layer: int=config['N_NODES_PER_LAYER'],
+                size: int=config['pool_n_layers'], 
+                layer_type: Type[torch.nn.Linear]=config['pool_layer_type'],
+                in_features: int=config['in_features'],
+                out_features: int=config['out_features'],
+                num_nodes_per_layer: int=config['n_nodes_per_layer'],
                 layers: List[torch.nn.Linear]=None):
         self.size = size if layers is None else len(layers)
         self.layer_type = layer_type
@@ -171,17 +180,17 @@ class LayerPool:
         if layers is None:
             self.layers = [Layer(params=self.layer_type(in_features=num_nodes_per_layer, out_features=num_nodes_per_layer))
                 for _ in range(size)]
-            for i in range(config['N_TASKS']):
+            for i in range(config['n_tasks']):
                 self.layers[size + i] = self.layer_type(in_features=in_features, out_features=num_nodes_per_layer)
-            for i in range(config['N_TASKS']):
+            for i in range(config['n_tasks']):
                 self.layers[size + i] = self.layer_type(in_features=num_nodes_per_layer, out_features=out_features)
             [torch.nn.init.xavier_uniform_(layer.params.weight) for layer in self.layers.values()]
         else:
             self.layers = [Layer(params=layer) for layer in layers]
-            config['POOL_N_LAYERS'] = len(self.layers)
+            config['pool_n_layers'] = len(self.layers)
         
     def __str__(self):
-        return f"LayerPool(size={self.size}, layer_type={config['POOL_LAYER_TYPE']}, num_nodes_per_layer={config['N_NODES_PER_LAYER']}"
+        return f"LayerPool(size={self.size}, layer_type={config['pool_layer_type']}, num_nodes_per_layer={config['n_nodes_per_layer']}"
 
 class InnerNetworkAction(Enum):
     TRAIN = 0
@@ -196,7 +205,7 @@ class InnerNetworkTask(Dataset):
         self.info = info
 
     def __len__(self):
-        assert len(self.data) == config['N_X'], '[ERROR] Length should be the same as N_X.'
+        assert len(self.data) == config['n_x'], '[ERROR] Length should be the same as N_X.'
         return len(self.data)
 
     def __getitem__(self, index):
@@ -212,18 +221,18 @@ class InnerNetworkTask(Dataset):
     def __str__(self):
         return f'[INFO] InnerNetworkTask(data={self.data, self.targets}, info={self.info})'
 
-class InnerNetwork(gym.Env, Module):
+class InnerNetwork(gymnasium.Env, Module):
     def __init__(self, 
                 epoch: int,
                 task: InnerNetworkTask,
                 layer_pool: LayerPool,
-                in_features: int=config['IN_FEATURES'],
-                out_features: int=config['OUT_FEATURES'],
-                learning_rate: float=config['LEARNING_RATE'],
-                batch_size: int=config['BATCH_SIZE'],
-                epsilon: float=config['EPSILON'],
-                action_cache_size: float=config['ACTION_CACHE_SIZE'],
-                num_workers: int=config['NUM_WORKERS'],
+                in_features: int=config['in_features'],
+                out_features: int=config['out_features'],
+                learning_rate: float=config['learning_rate'],
+                batch_size: int=config['batch_size'],
+                epsilon: float=config['epsilon'],
+                action_cache_size: float=config['action_cache_size'],
+                num_workers: int=config['num_workers'],
                 shuffle: bool=True,
                 log_dir: str='runs',
                 ):
@@ -249,12 +258,12 @@ class InnerNetwork(gym.Env, Module):
         self.layer_indices = [[layer.params for layer in self.layer_pool.layers].index(layer) for layer in self.layers] 
         self.loss_fn = torch.nn.MSELoss()
         self.opt = torch.optim.Adam(self.layers.parameters(), lr=self.learning_rate)
-        self.actions_taken = [InnerNetworkAction.TRAIN] * config['ACTION_CACHE_SIZE']
+        self.actions_taken = [InnerNetworkAction.TRAIN] * config['action_cache_size']
         self.writer = SummaryWriter(log_dir=log_dir)
         self.state = self.reset()
         state_shape = self.build_state().shape
-        self.observation_space = gym.spaces.box.Box(low=float('-inf'), high=float('inf'), shape=state_shape) # TODO is to normalize
-        self.action_space = gym.spaces.discrete.Discrete(self.layer_pool.size * 3)
+        self.observation_space = gymnasium.spaces.box.Box(low=float('-inf'), high=float('inf'), shape=state_shape) # TODO is to normalize
+        self.action_space = gymnasium.spaces.discrete.Discrete(self.layer_pool.size * 3)
         self.timestep = 0
 
 
@@ -289,7 +298,7 @@ class InnerNetwork(gym.Env, Module):
         add_action_type = action < self.layer_pool.size
         delete_action_type = action >= self.layer_pool.size and (action < self.layer_pool.size * 2)
         if (add_action_type):
-            if (len(self.layers)==config['N_LAYERS_PER_NETWORK']):
+            if (len(self.layers)==config['n_layers_per_network']):
                 self.curr['action_type'] = InnerNetworkAction.ERROR
             elif (self.layer_pool.layers[action] in self.layers):
                 self.curr['action_type'] = InnerNetworkAction.ERROR
@@ -438,14 +447,14 @@ class REML:
         self,
         layer_pool: LayerPool,
         tasks: List[InnerNetworkTask],
-        model=config['SB3_MODEL'],
-        policy=config['SB3_POLICY'],
-        epochs: int=config['EPOCHS'],
-        timesteps: int=config['TIMESTEPS'],
-        device: str=config['DEVICE'],
+        model=config['sb3_model'],
+        policy=config['sb3_policy'],
+        epochs: int=config['epochs'],
+        timesteps: int=config['timesteps'],
+        device: str=config['device'],
         overwrite: bool=True,  # TODO is to revisit this param
         intra_update: bool=True, # TODO is to revisit this param
-        log_dir: str=config['LOG_DIR'],
+        log_dir: str=config['log_dir'],
         ):
         self.layer_pool = layer_pool
         self.tasks = tasks
@@ -474,7 +483,7 @@ class REML:
                 # each task gets its own network
                 self.env = InnerNetwork(epoch, task, self.layer_pool, log_dir=self.log_dir)
                 if i==0:
-                    model = self.model(self.policy, self.env,n_steps=config['N_X'], tensorboard_log=self.log_dir,)
+                    model = self.model(self.policy, self.env,n_steps=config['n_x'], tensorboard_log=self.log_dir,)
                 else: 
                     model.set_env(self.env)
                 model.learn(total_timesteps=self.timesteps, tb_log_name=f'epoch_{epoch}_task_{i}', reset_num_timesteps=True)
@@ -522,7 +531,7 @@ class REML:
             return y_hats
 
 if __name__ == "__main__":
-    tasks = [InnerNetworkTask(data=tasks_data[i], targets=tasks_targets[i], info=tasks_info[i]) for i in range(config['N_TASKS'])]
+    tasks = [InnerNetworkTask(data=tasks_data[i], targets=tasks_targets[i], info=tasks_info[i]) for i in range(config['n_tasks'])]
     pool = LayerPool(layers=layers)
     log_dir = f'./runs/ppo_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}'
     model = REML(layer_pool=pool, tasks=tasks, log_dir=log_dir)

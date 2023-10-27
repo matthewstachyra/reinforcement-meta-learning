@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH -J initial-bounded-networks-run     # job name
-#SBATCH --time=00-05:00:00                  # requested time (DD-HH:MM:SS)
+#SBATCH --time=00-08:00:00                  # requested time (DD-HH:MM:SS)
 #SBATCH -p gpu --gres=gpu:p100:1            # partition
 #SBATCH -N 1                                # 1 nodes
 #SBATCH -n 2                                # 2 tasks total (default 1 CPU core per task) = # of cores
