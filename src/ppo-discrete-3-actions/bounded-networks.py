@@ -484,14 +484,16 @@ class REML:
                     self.env.writer.add_scalar(f'sin_curve/epoch{epoch}_task{i}', yhat, global_step=x)
                 self.env.writer.close()
 
-                # update pool
-                # larger problem is that we have multiple copes of each layer, so which copy do we add
-                # for i in range(len(self.env.pool_indices)):
-                #     pool_index = self.env.pool_indices[i]
-                #     updated_layer_copy = self.env.layers[i+1]
-                #     self.layer_pool.layers[pool_index].params = updated_layer_copy
-                #     self.layer_pool.layers[pool_index].used = True
-                #     self.layer_pool.layers[pool_index].times_used += 1
+		# save new pool
+                for i, updated_layer_params in enumerate(self.env.layers):
+                    pool_index = self.env.layer_indices[i]
+                    assert updated_layer_params.in_features==self.layer_pool.layers[pool_index].params.in_features, '[ERROR]'
+                    assert updated_layer_params.out_features==self.layer_pool.layers[pool_index].params.out_features, '[ERROR]'
+                    assert updated_layer_params!=self.layer_pool.layers[pool_index], '[ERROR]'
+                    self.layer_pool.layers[pool_index].params = updated_layer_params
+                    self.layer_pool.layers[pool_index].used = True
+                    self.layer_pool.layers[pool_index].times_used += 1
+                print(f'[INFO] Updated pool layers.')
     
     def evaluate_inner_network(self):
         try:
