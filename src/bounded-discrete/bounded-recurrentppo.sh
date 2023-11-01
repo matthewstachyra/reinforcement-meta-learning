@@ -1,17 +1,16 @@
 #!/bin/bash
-#SBATCH -J bounded-recurrentppo-mlplstm-policy      # job name
+#SBATCH -J recurrent-ppo-1-task-test
 #SBATCH --time=00-08:00:00                  # requested time (DD-HH:MM:SS)
 #SBATCH -p gpu 
 #SBATCH --gres=gpu:a100:1            # partition
 #SBATCH -N 1                                # 1 nodes
 #SBATCH -n 2                                # 2 tasks total (default 1 CPU core per task) = # of cores
 #SBATCH --mem=16g                             # requesting 2GB of RAM total
-#SBATCH --output=bounded-recurrentppo-mlplstm-policy-run.%j.%N.out #saving standard output to file, %j=JOBID, %N=NodeName
-#SBATCH --error=bounded-recurrentppo-mlplstm-policy-run.%j.%N.err #saving standard error to file, %j=JOBID, %N=NodeName
+#SBATCH --output=recurrent-ppo-1-task-test.%j.%N.out #saving standard output to file, %j=JOBID, %N=NodeName
+#SBATCH --error=recurrent-ppo-1-task-test.%j.%N.err #saving standard error to file, %j=JOBID, %N=NodeName
 #SBATCH --mail-type=ALL                     # email
 #SBATCH --mail-user=matthew.stachyra@tufts.edu
 
 module load anaconda/2023.07
-conda activate mthesis
-python bounded-networks.py --sb3_model='RecurrentPPO' --sb3_polcy='MlpLstmPolicy' --log_dir='slurm'
-conda deactivate
+source activate mthesis
+python bounded-networks.py --epochs 1 --timesteps 60000 --n_tasks 1 --sb3_model='RecurrentPPO' --sb3_policy='MlpLstmPolicy' --log_dir='slurm'

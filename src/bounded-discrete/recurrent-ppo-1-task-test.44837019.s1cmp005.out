@@ -1,0 +1,7 @@
+[INFO] Config={'seed': 41, 'device': 'cuda', 'epochs': 1, 'timesteps': 60000, 'n_x': 100, 'n_tasks': 1, 'in_features': 1, 'out_features': 1, 'pool_n_layers': 30, 'n_layers_per_network': 5, 'n_nodes_per_layer': 32, 'pool_layer_type': <class 'torch.nn.modules.linear.Linear'>, 'action_space_shape': (3,), 'epsilon': 0.1, 'batch_size': 1, 'learning_rate': 0.01, 'action_cache_size': 5, 'num_workers': 0, 'loss_fn': MSELoss(), 'sb3_model': 'RecurrentPPO', 'sb3_policy': 'MlpLstmPolicy', 'log_dir': 'slurm'}
+[INFO] Tasks created.
+[INFO] Task 1 layers are pre-initialized.
+[INFO] Layers pre-initialized on tasks.
+[INFO] Epoch 1/1
+[INFO] Task num=1/1
+[INFO] Updated pool layers.

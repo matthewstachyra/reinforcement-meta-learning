@@ -10,9 +10,9 @@ import torch.nn.functional as F
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
 from torch.nn import Module
+from torch.utils.tensorboard import SummaryWriter
 import gymnasium
 from gymnasium import Env
-from sklearn.model_selection import train_test_split
 from gymnasium.spaces.box import Box
 from gymnasium.spaces.discrete import Discrete
 from gymnasium.utils.env_checker import check_env
@@ -23,21 +23,19 @@ from typing import (
     Tuple,
     Callable,
 )
-import matplotlib.pyplot as plt
 import stable_baselines3
 from sb3_contrib import RecurrentPPO
 from stable_baselines3 import PPO
 from stable_baselines3.common.env_checker import check_env
-from torch.utils.tensorboard import SummaryWriter
 
 # configuration
 default_config = {
     'seed' : 41,
     'device' : 'cuda',
-    'epochs' : 20,
-    'timesteps' : 20000,
+    'epochs' : 5,
+    'timesteps' : 50000,
     'n_x' : 100,
-    'n_tasks' : 5,
+    'n_tasks' : 1,
     'in_features' : 1,
     'out_features' : 1,
     'pool_n_layers' : 30,
@@ -470,9 +468,9 @@ class REML:
                 print(f'[INFO] Task num={i+1}/{len(self.tasks)}')
 
                 # each task gets its own network
-                self.env = InnerNetwork(epoch, task, self.layer_pool, log_dir=self.log_dir)
+                self.env = gymnasium.wrappers.NormalizeObservation(InnerNetwork(epoch, task, self.layer_pool, log_dir=self.log_dir))
                 if i==0:
-                    model = self.model(self.policy, self.env,n_steps=config['n_x'], tensorboard_log=self.log_dir,)
+                    model = self.model(self.policy, self.env, n_steps=2, tensorboard_log=self.log_dir,)
                 else: 
                     model.set_env(self.env)
                 model.learn(total_timesteps=self.timesteps, tb_log_name=f'epoch_{epoch}_task_{i}', reset_num_timesteps=True)
@@ -484,7 +482,7 @@ class REML:
                     self.env.writer.add_scalar(f'sin_curve/epoch{epoch}_task{i}', yhat, global_step=x)
                 self.env.writer.close()
 
-                # save new pool
+		# save new pool
                 for i, updated_layer_params in enumerate(self.env.layers):
                     pool_index = self.env.layer_indices[i]
                     assert updated_layer_params.in_features==self.layer_pool.layers[pool_index].params.in_features, '[ERROR]'
@@ -524,6 +522,6 @@ class REML:
 if __name__ == "__main__":
     tasks = [InnerNetworkTask(data=tasks_data[i], targets=tasks_targets[i], info=tasks_info[i]) for i in range(config['n_tasks'])]
     pool = LayerPool(layers=layers)
-    log_dir = f'./runs/ppo_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}'
+    log_dir = f"./{config['log_dir']}/ppo_{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}"
     model = REML(layer_pool=pool, tasks=tasks, log_dir=log_dir)
     model.train()

@@ -1,0 +1,6 @@
+usage: bounded-networks.py [-h] [--device DEVICE] [--epochs EPOCHS]
+                           [--timesteps TIMESTEPS] [--sb3_model SB3_MODEL]
+                           [--sb3_policy SB3_POLICY] [--log_dir LOG_DIR]
+                           [--n_tasks N_TASKS]
+                           [--n_layers_per_network N_LAYERS_PER_NETWORK]
+bounded-networks.py: error: unrecognized arguments: --sb3_polcy=MlpLstmPolicy
