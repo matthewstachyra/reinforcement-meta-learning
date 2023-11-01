@@ -1,0 +1,5 @@
+/var/spool/slurm/job44829824/slurm_script: line 16: /cluster/home/mstach01/condaenv/mthesis/bin/activate: No such file or directory
+Traceback (most recent call last):
+  File "/cluster/home/mstach01/code/thesis/src/ppo-discrete-3-actions/bounded-networks.py", line 13, in <module>
+    import gymnasium
+ModuleNotFoundError: No module named 'gymnasium'
