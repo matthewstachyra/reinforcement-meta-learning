@@ -1,0 +1,31 @@
+
+     active environment : mthesis
+    active env location : /cluster/home/mstach01/condaenv/mthesis
+            shell level : 2
+       user config file : /cluster/home/mstach01/.condarc
+ populated config files : /cluster/home/mstach01/.condarc
+          conda version : 23.7.4
+    conda-build version : 3.26.0
+         python version : 3.11.4.final.0
+       virtual packages : __archspec=1=x86_64
+                          __glibc=2.17=0
+                          __linux=3.10.0=0
+                          __unix=0=0
+       base environment : /cluster/tufts/hpc/tools/anaconda/202307  (read only)
+      conda av data dir : /cluster/tufts/hpc/tools/anaconda/202307/etc/conda
+  conda av metadata url : None
+           channel URLs : https://repo.anaconda.com/pkgs/main/linux-64
+                          https://repo.anaconda.com/pkgs/main/noarch
+                          https://repo.anaconda.com/pkgs/r/linux-64
+                          https://repo.anaconda.com/pkgs/r/noarch
+          package cache : /cluster/home/mstach01/condapkg
+       envs directories : /cluster/home/mstach01/condaenv
+                          /cluster/home/mstach01/.conda/envs
+                          /cluster/tufts/hpc/tools/anaconda/202307/envs
+               platform : linux-64
+             user-agent : conda/23.7.4 requests/2.31.0 CPython/3.11.4 Linux/3.10.0-1127.el7.x86_64 rhel/7.8 glibc/2.17
+                UID:GID : 33904:7644
+             netrc file : None
+           offline mode : False
+
+
