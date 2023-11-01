@@ -1,5 +1,6 @@
-data/
 archive/
 notes/
 writeup/
 runs/
+slurm_scripts/
+/src/bounded-discrete/log

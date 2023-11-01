@@ -1,4 +1,0 @@
-usage: conda [-h] [--no-plugins] [-V] COMMAND ...
-conda: error: argument COMMAND: invalid choice: 'activate' (choose from 'clean', 'compare', 'config', 'create', 'info', 'init', 'install', 'list', 'notices', 'package', 'remove', 'uninstall', 'rename', 'run', 'search', 'update', 'upgrade', 'build', 'content-trust', 'convert', 'debug', 'develop', 'doctor', 'index', 'inspect', 'metapackage', 'render', 'skeleton', 'repo', 'token', 'pack', 'server', 'env', 'verify')
-slurmstepd: error: *** JOB 44829832 ON p1cmp073 CANCELLED AT 2023-10-30T19:00:04 DUE TO TIME LIMIT ***
-slurmstepd: error: proctrack_p_wait: Unable to destroy container 32033 in cgroup plugin, giving up after 128 sec
