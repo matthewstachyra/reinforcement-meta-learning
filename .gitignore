@@ -1,6 +1,10 @@
 archive/
 notes/
 writeup/
-runs/
 slurm_scripts/
 /src/bounded-discrete/log
+/src/bounded-discrete/runs
+/src/bounded-discrete/slurm
+*.wandb
+*.log
+*.zip

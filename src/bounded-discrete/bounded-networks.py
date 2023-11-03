@@ -482,7 +482,7 @@ class REML:
                     self.env.writer.add_scalar(f'sin_curve/epoch{epoch}_task{i}', yhat, global_step=x)
                 self.env.writer.close()
 
-		# save new pool
+		        # save new pool
                 for i, updated_layer_params in enumerate(self.env.layers):
                     pool_index = self.env.layer_indices[i]
                     assert updated_layer_params.in_features==self.layer_pool.layers[pool_index].params.in_features, '[ERROR]'
