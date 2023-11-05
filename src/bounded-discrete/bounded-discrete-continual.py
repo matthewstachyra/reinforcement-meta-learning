@@ -41,7 +41,7 @@ default_config = {
     'n_tasks' : 1,
     'in_features' : 1,
     'out_features' : 1,
-    'pool_n_layers' : 30,
+    'n_pool_hidden_layers' : 30,
     'n_layers_per_network' : 5,
     'n_nodes_per_layer' : 32,
     'pretrain' : False,
@@ -151,7 +151,6 @@ if config['pretrain']:
 
         print(f'[INFO] Layers pre-initialized on tasks.')
 
-print(f'[INFO] Layers pre-initialized on tasks.')
 class LayerPool:
     def __init__(self, 
                 size: int=config['n_pool_hidden_layers'], 
@@ -557,8 +556,7 @@ class REML:
 
 if __name__ == "__main__":
     tasks = [InnerNetworkTask(data=tasks_data[i], targets=tasks_targets[i], info=tasks_info[i]) for i in range(config['n_tasks'])]
-    if config['pretrain']:
-        pool = LayerPool(layers=layers) if config['pretrain'] else LayerPool(layers=None)
+    pool = LayerPool(layers=layers) if config['pretrain'] else LayerPool(layers=None)
     log_dir = f"./{config['log_dir']}/ppo_{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}"
     model = REML(layer_pool=pool, tasks=tasks, log_dir=log_dir)
     model.train()
