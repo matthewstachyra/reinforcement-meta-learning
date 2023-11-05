@@ -66,7 +66,7 @@ parser.add_argument('--sb3_policy', '-p', type=str, default=default_config['sb3_
 parser.add_argument('--log_dir', '-o', type=str, default=default_config['log_dir'], help='Directory to save tensorboard logs', required=False)
 parser.add_argument('--n_tasks', type=int, default=default_config['n_tasks'], help='Number of tasks to generate', required=False)
 parser.add_argument('--n_layers_per_network', type=int, default=default_config['n_layers_per_network'], help='Number of layers per network', required=False)
-parser.add_argument('--pretrain', type=bool, default=default_config['pretrain'], help='Whether to pretrain layers for layer pool.', required=False)
+parser.add_argument('--pretrain', action='store_true', help='Whether to pretrain layers for layer pool.', required=False)
 args = parser.parse_args()
 config = { key : getattr(args, key, default_value) for key, default_value in default_config.items() }
 
@@ -127,26 +127,29 @@ class RegressionModel(torch.nn.Module):
         return x
 
 # pretrain layers
-layers = []
-data = []
-for x, y in zip(tasks_data, tasks_targets):
-    data.append([x,y])
-for i, (x, y) in enumerate(data):
-    print(f'[INFO] Task {i+1} layers are pre-initialized.')
-    model = RegressionModel()
-    criterion = torch.nn.MSELoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
-    num_epochs = 20000
-    model.train()
-    for epoch in range(num_epochs):
-        optimizer.zero_grad() 
-        outputs = model(x.view(-1, 1))
-        loss = criterion(outputs, y.view(-1,1))
-        loss.backward()
-        optimizer.step()
-    
-    # save layers for layer pool
-    layers.extend(model.layers)
+if config['pretrain']:
+    layers = []
+    data = []
+    for x, y in zip(tasks_data, tasks_targets):
+        data.append([x,y])
+    for i, (x, y) in enumerate(data):
+        print(f'[INFO] Task {i+1} layers are pre-initialized.')
+        model = RegressionModel()
+        criterion = torch.nn.MSELoss()
+        optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+        num_epochs = 20000
+        model.train()
+        for epoch in range(num_epochs):
+            optimizer.zero_grad()
+            outputs = model(x.view(-1, 1))
+            loss = criterion(outputs, y.view(-1,1))
+            loss.backward()
+            optimizer.step()
+
+        # save layers for layer pool
+        layers.extend(model.layers)
+
+        print(f'[INFO] Layers pre-initialized on tasks.')
 
 print(f'[INFO] Layers pre-initialized on tasks.')
 class LayerPool:
