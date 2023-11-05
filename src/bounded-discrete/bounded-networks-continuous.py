@@ -1,4 +1,5 @@
 import os
+import argparse
 import math
 import random
 import datetime
@@ -43,6 +44,7 @@ default_config = {
     'pool_n_layers' : 30,
     'n_layers_per_network' : 5,
     'n_nodes_per_layer' : 32,
+    'pretrain' : False,
     'pool_layer_type' : torch.nn.Linear,
     'action_space_shape' : (3,),
     'epsilon' : 0.1,
@@ -64,8 +66,11 @@ parser.add_argument('--sb3_policy', '-p', type=str, default=default_config['sb3_
 parser.add_argument('--log_dir', '-o', type=str, default=default_config['log_dir'], help='Directory to save tensorboard logs', required=False)
 parser.add_argument('--n_tasks', type=int, default=default_config['n_tasks'], help='Number of tasks to generate', required=False)
 parser.add_argument('--n_layers_per_network', type=int, default=default_config['n_layers_per_network'], help='Number of layers per network', required=False)
+parser.add_argument('--pretrain', type=bool, default=default_config['pretrain'], help='Whether to pretrain layers for layer pool.', required=False)
 args = parser.parse_args()
 config = { key : getattr(args, key, default_value) for key, default_value in default_config.items() }
+
+# initialize wandb
 wandb.init(
     project='reinforcement-meta-learning',
     config=config
@@ -121,6 +126,7 @@ class RegressionModel(torch.nn.Module):
         x = self.layers[-1](x)
         return x
 
+# pretrain layers
 layers = []
 data = []
 for x, y in zip(tasks_data, tasks_targets):
@@ -130,8 +136,6 @@ for i, (x, y) in enumerate(data):
     model = RegressionModel()
     criterion = torch.nn.MSELoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
-
-    # train before graphing
     num_epochs = 20000
     model.train()
     for epoch in range(num_epochs):
@@ -145,11 +149,9 @@ for i, (x, y) in enumerate(data):
     layers.extend(model.layers)
 
 print(f'[INFO] Layers pre-initialized on tasks.')
-
 class LayerPool:
-    # pool of uniform Layer objects each with the same type and shape
     def __init__(self, 
-                size: int=config['pool_n_layers'], 
+                size: int=config['n_pool_hidden_layers'], 
                 layer_constructor: Type[torch.nn.Linear]=config['pool_layer_type'],
                 in_features: int=config['in_features'],
                 out_features: int=config['out_features'],
@@ -174,7 +176,7 @@ class LayerPool:
             [torch.nn.init.xavier_uniform_(layer.weight) for layer in self.layers]
         else:
             self.layers = layers
-            config['pool_n_layers'] = len(self.layers)
+            config['n_pool_hidden_layers'] = len(self.layers)
         
     def __str__(self):
         return f"LayerPool(size={self.size}, layer_type={config['pool_layer_type']}, num_nodes_per_layer={config['n_nodes_per_layer']}"
@@ -243,7 +245,7 @@ class InnerNetwork(gymnasium.Env, Module):
         self.initial_layer = random.choice([layer for layer in self.layer_pool.layers if getattr(layer, 'in_features', None) == in_features])
         self.final_layer = random.choice([layer for layer in self.layer_pool.layers if getattr(layer, 'out_features', None) == out_features])
         self.layers = torch.nn.ModuleList([self.initial_layer, self.final_layer]) 
-        self.layer_indices = [[layer for layer in self.layer_pool.layers].index(layer) for layer in self.layers] 
+        self.layers_pool_indices = [self.layer_pool.layers.index(layer) for layer in self.layers] 
         self.loss_fn = torch.nn.MSELoss()
         self.opt = torch.optim.Adam(self.layers.parameters(), lr=self.learning_rate)
         self.actions_taken = [InnerNetworkAction.TRAIN] * config['action_cache_size']
@@ -277,9 +279,6 @@ class InnerNetwork(gymnasium.Env, Module):
         )
     
     def decide_action_type(self, action: np.int64) -> None:
-        # limited network depth
-        # each layer can only be used once
-        # can only delete layers that exist
         if random.random() < self.epsilon: 
             action = random.randint(0, self.action_space.n - 1)
         add_action_type = action < self.layer_pool.size
@@ -287,9 +286,10 @@ class InnerNetwork(gymnasium.Env, Module):
         if (add_action_type):
             if (len(self.layers)==config['n_layers_per_network']):
                 self.curr['action_type'] = InnerNetworkAction.ERROR
-            # elif (self.layer_pool.layers[action] in self.layers):
-            #     self.curr['action_type'] = InnerNetworkAction.ERROR
             elif self.layer_pool.layers[action].in_features==self.in_features or self.layer_pool.layers[action].out_features==self.out_features:
+                self.curr['action_type'] = InnerNetworkAction.ERROR
+            # limitation of layer pool design: can only use each layer once if updated the pool after
+            elif self.layer_pool.layers[action] in self.layers:
                 self.curr['action_type'] = InnerNetworkAction.ERROR
             else:
                 self.curr['action_type'] = InnerNetworkAction.ADDTRAIN
@@ -310,26 +310,26 @@ class InnerNetwork(gymnasium.Env, Module):
         index = self.decide_action_type(action)
         if (self.curr['action_type']==InnerNetworkAction.ADDTRAIN): 
             new_layer = self.layer_pool.layers[index]
-            # # new initial layer
-            # if new_layer.in_features==self.in_features:
-            #     self.layers.pop(0) 
-            #     self.layers.insert(0, new_layer)
-            # # new final layer
-            # elif new_layer.out_features==self.out_features:
-            #     self.layers.pop(-1)
-            #     self.layers.append(new_layer)
             final_layer = self.layers.pop(-1) 
+            final_layer_index = self.layers_pool_indices.pop(-1)
             self.layers.append(new_layer)
             self.layers.append(final_layer) 
+            self.layers_pool_indices.append(index)
+            self.layers_pool_indices.append(final_layer_index)
         elif (self.curr['action_type']==InnerNetworkAction.DELETETRAIN):
-            layers_copy = self.layers
-            self.layers = torch.nn.ModuleList([layer for layer in self.layers if layer!=self.layer_pool.layers[index]])
-            assert len(layers_copy)!=len(self.layers), '[ERROR] Delete on inner network failed.'
+            prev_layers_length = len(self.layers)
+            index_within_layers = self.layers_pool_indices.index(index)
+            success = self.layers.pop(index_within_layers)
+            if success:
+                self.layers_pool_indices.pop(index_within_layers)
+            else:
+                raise Exception('[ERROR] Delete on inner network failed.')
+            assert prev_layers_length!=len(self.layers), '[ERROR] Delete on inner network failed.'
         elif (self.curr['action_type']==InnerNetworkAction.TRAIN or self.curr['action_type']==InnerNetworkAction.ERROR):
             return 
         else: 
             raise Exception(f"[ERROR] Unexpected action returned by inner network: {self.curr['action_type']}")
-        self.layer_indices = [[layer for layer in self.layer_pool.layers].index(layer) for layer in self.layers] 
+        assert len(self.layers_pool_indices)!=0, '[ERROR] Layers pool indices should not have length 0.'
             
     def next_batch(self, throw_exception=False) -> None:
         self.prev = self.curr
@@ -354,12 +354,19 @@ class InnerNetwork(gymnasium.Env, Module):
     
     def run_inner_network(self) -> None: 
         if self.training:
+            self.train()
             self.opt = torch.optim.Adam(self.layers.parameters(), lr=self.learning_rate) 
             self.opt.zero_grad()
             self.forward(self.curr['x'])
             loss = self.curr['loss']
             loss.backward()
+            params_before = [param.data.clone() for param in self.layers.parameters()]
             self.opt.step()
+            params_after = [param.data.clone() for param in self.layers.parameters()]
+            # assert layers get updated
+            for param_before, param_after in zip(params_before, params_after):
+                if torch.all(torch.eq(param_before, param_after)):
+                    print('[INFO] Layer in environment not updated.')
         else:
             self.forward(self.curr['x'])
 
@@ -374,26 +381,43 @@ class InnerNetwork(gymnasium.Env, Module):
         assert self.curr['y_hat'].dtype == torch.float32
 
     def build_state(self) -> np.ndarray:
-        one_hot_network_layers = torch.tensor(np.array([1 if self.layer_pool.layers[i] in self.layers else 0 
-                                   for i in range(len(self.layer_pool.layers))]))
+
+        def get_hidden_layer_params_and_gradients():
+            num_layers = len(self.layers)
+            max_num_hidden_layers = config['n_layers_per_network'] - 2
+            num_hidden_layers = num_layers - 2
+            hidden_layers = self.layers[1:-1]
+            params = torch.Tensor(np.array([layer.weight.detach() for layer in hidden_layers])) 
+            gradients = torch.Tensor(np.array([layer.weight.grad for layer in hidden_layers]))
+            if num_hidden_layers < config['n_layers_per_network'] - 2: # zero pad the difference
+                zero_pad = [torch.zeros((config['n_nodes_per_layer'], config['n_nodes_per_layer']))] * (max_num_hidden_layers - num_hidden_layers)
+                zero_pad_tensor = torch.Tensor(np.array(zero_pad))
+                params = torch.cat((params, zero_pad_tensor))
+                gradients = torch.cat((gradients, zero_pad_tensor))
+            assert params.shape==(max_num_hidden_layers, config['n_nodes_per_layer'], config['n_nodes_per_layer']), f"[ERROR] Expected params shape={max_num_hidden_layers, config['n_nodes_per_layer'], config['n_nodes_per_layer']}, got {params.shape}"
+            return params.view(-1), gradients.view(-1)
+        
+        task_info = torch.tensor([float(value) for value in self.curr['info'].values()])
+        loss = torch.Tensor([self.curr['loss']])
+        params, gradients = get_hidden_layer_params_and_gradients()
+        one_hot_layers = torch.tensor(np.array([1 if self.layer_pool.layers[i] in self.layers else 0 for i in range(len(self.layer_pool.layers))]))
         num_add_actions = torch.tensor(len(list(filter(lambda e : e == InnerNetworkAction.ADDTRAIN, self.actions_taken)))).unsqueeze(0)
         num_delete_actions = torch.tensor(len(list(filter(lambda e : e == InnerNetworkAction.DELETETRAIN, self.actions_taken)))).unsqueeze(0)
         num_layers = torch.tensor(len(self.layers)).unsqueeze(0)
         h = torch.tensor([action_enum.value for action_enum in self.actions_taken[-self.action_cache_size:]])
-        task_info = torch.tensor([float(value) for value in self.curr['info'].values()])
-
-        # sequence_network_layers = torch.tensor(np.array([index + 1 for index in self.pool_indices] + [0] * (self.layer_pool.size - len(self.pool_indices))))
 
         return torch.concat((
             # about the task
             task_info,
-            self.curr['x'],
-            # about the inner network's choices
+            # about the inner network
             self.curr['latent_space'],
             self.curr['y'],
-            self.curr['y_hat'],
+            self.curr['y_hat'], 
+            loss,
+            params,     
+            gradients,
+            one_hot_layers,
             # about the meta network's choices
-            one_hot_network_layers,
             num_add_actions,
             num_delete_actions,
             num_layers,
@@ -404,8 +428,10 @@ class InnerNetwork(gymnasium.Env, Module):
         prev_loss = self.curr['prev_loss'] or None
         curr_loss = self.curr['loss']
         loss_delta = prev_loss - curr_loss if prev_loss is not None else curr_loss
+        # TODO is to try penalizing the network for choosing ADDTRAIN or DELETETRAIN as the episode progresses; right now,
+        # its not clear that this is an issue to solve with reward shaping
         if (self.curr['action_type'] == InnerNetworkAction.ADDTRAIN):
-            reward = loss_delta / math.sqrt(len(self.layers))
+            reward = loss_delta 
         elif (self.curr['action_type'] == InnerNetworkAction.DELETETRAIN or self.curr['action_type'] == InnerNetworkAction.TRAIN):
             reward = loss_delta
         elif (self.curr['action_type'] == InnerNetworkAction.ERROR):
@@ -423,8 +449,8 @@ class InnerNetwork(gymnasium.Env, Module):
         self.writer.add_scalar(f'reward_epoch{self.epoch}_task{task_num}', self.curr['reward'], global_step=self.timestep)
         wandb.log({ f'reward_epoch{self.epoch}_task{task_num}' : self.curr['reward'], })
         if (len(self.layers)!=0):
-            self.writer.add_histogram(f'pool_indices_epoch{self.epoch}_task{task_num}', torch.tensor(self.layer_indices).long(), global_step=self.timestep) 
-            wandb.log({ f'pool_indices_epoch{self.epoch}_task{task_num}' : wandb.Histogram(torch.tensor(self.layer_indices))})
+            self.writer.add_histogram(f'pool_indices_epoch{self.epoch}_task{task_num}', torch.tensor(self.layers_pool_indices).long(), global_step=self.timestep) 
+            wandb.log({ f'pool_indices_epoch{self.epoch}_task{task_num}' : wandb.Histogram(torch.tensor(self.layers_pool_indices))})
         self.writer.add_histogram(f'action_types_epoch{self.epoch}_task{task_num}', torch.tensor([e.value for e in self.actions_taken]).long(), global_step=self.timestep) 
         wandb.log({ f'action_types_epoch{self.epoch}_task{task_num}' : wandb.Histogram(torch.tensor([e.value for e in self.actions_taken]))})
 
@@ -450,7 +476,12 @@ class REML:
         ):
         self.layer_pool = layer_pool
         self.tasks = tasks
-        self.model = PPO if model=='PPO' else RecurrentPPO
+        if config['sb3_model']=='PPO':
+            self.model = PPO
+        elif config['sb3_model']=='RecurrentPPO':
+            self.model = RecurrentPPO
+        elif config['sb3_model']=='DQN':
+            self.model = DQN
         self.policy = policy
         self.epochs = epochs
         self.timesteps = timesteps
@@ -497,14 +528,19 @@ class REML:
                 wandb.log({plot_name: wandb.Image(plot_path)})
                 self.env.writer.close()
 
-                # save new pool
-                for i, updated_layer in enumerate(self.env.layers):
-                    pool_index = self.env.layer_indices[i]
-                    assert updated_layer.in_features==self.layer_pool.layers[pool_index].in_features, '[ERROR]'
-                    assert updated_layer.out_features==self.layer_pool.layers[pool_index].out_features, '[ERROR]'
-                    assert updated_layer!=self.layer_pool.layers[pool_index], '[ERROR]'
-                    self.layer_pool.layers[pool_index] = updated_layer
-                print(f'[INFO] Updated pool layers.')
+		        # save new pool
+                for pool_index in self.env.layers_pool_indices:
+                    index_within_layers = self.env.layers_pool_indices.index(pool_index)
+                    updated_pool_layer = self.env.layers[index_within_layers]
+                    self.layer_pool.layers[pool_index] = self.env.layers[index_within_layers]
+                    assert updated_pool_layer.in_features==self.layer_pool.layers[pool_index].in_features, '[ERROR] Pool layer to be updated did not match the environment layer.'
+                    assert updated_pool_layer.out_features==self.layer_pool.layers[pool_index].out_features, '[ERROR] Pool layer to be updated did not match the environment layer.'
+                    # check layers in pool are now the same as those in env network 
+                    env_layer_params = [param.data.clone() for param in self.env.layers.parameters()]
+                    corresponding_pool_layer_params = [param.data.clone() for param in torch.nn.ModuleList([self.env.layer_pool.layers[index] for index in self.env.layers_pool_indices]).parameters()]
+                    for param_before, param_after in zip(env_layer_params, corresponding_pool_layer_params):
+                        if not torch.all(torch.eq(param_before, param_after)):
+                            print('[ERROR] Layers in pool not updated.')
     
     def evaluate_inner_network(self) -> List[torch.Tensor]:
         self.env.eval()
@@ -518,7 +554,8 @@ class REML:
 
 if __name__ == "__main__":
     tasks = [InnerNetworkTask(data=tasks_data[i], targets=tasks_targets[i], info=tasks_info[i]) for i in range(config['n_tasks'])]
-    pool = LayerPool(layers=layers)
+    if config['pretrain']:
+        pool = LayerPool(layers=layers) if config['pretrain'] else LayerPool(layers=None)
     log_dir = f"./{config['log_dir']}/ppo_{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}"
     model = REML(layer_pool=pool, tasks=tasks, log_dir=log_dir)
     model.train()
