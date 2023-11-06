@@ -412,13 +412,22 @@ class InnerNetwork(gymnasium.Env, Module):
             max_num_hidden_layers = config['n_layers_per_network'] - 2
             num_hidden_layers = num_layers - 2
             hidden_layers = self.layers[1:-1]
-            params = torch.Tensor(np.array([layer.weight.detach() for layer in hidden_layers])) 
-            gradients = torch.Tensor(np.array([layer.weight.grad for layer in hidden_layers]))
-            if num_hidden_layers < config['n_layers_per_network'] - 2: # zero pad the difference
-                zero_pad = [torch.zeros((config['n_nodes_per_layer'], config['n_nodes_per_layer']))] * (max_num_hidden_layers - num_hidden_layers)
-                zero_pad_tensor = torch.Tensor(np.array(zero_pad))
-                params = torch.cat((params, zero_pad_tensor))
-                gradients = torch.cat((gradients, zero_pad_tensor))
+            params = [layer.weight.detach() for layer in hidden_layers]
+            gradients = [layer.weight.grad for layer in hidden_layers]
+            if num_hidden_layers < config['n_layers_per_network'] - 2: # zero pad the difference 
+                zero_pad = [torch.zeros((config['n_nodes_per_layer'], config['n_nodes_per_layer']), dtype=torch.float32)] * (max_num_hidden_layers - num_hidden_layers)
+                zero_pad_tensor = torch.stack(zero_pad)
+                if len(params) > 0 and len(gradients) > 0:
+                    params = torch.stack(params)
+                    gradients = torch.stack(gradients)
+                    params = torch.cat((params, zero_pad_tensor))
+                    gradients = torch.cat((gradients, zero_pad_tensor)) 
+                else:
+                    params = zero_pad_tensor
+                    gradients = zero_pad_tensor
+            else:
+                params = torch.stack(params)
+                gradients = torch.stack(gradients)
             assert params.shape==(max_num_hidden_layers, config['n_nodes_per_layer'], config['n_nodes_per_layer']), f"[ERROR] Expected params shape={max_num_hidden_layers, config['n_nodes_per_layer'], config['n_nodes_per_layer']}, got {params.shape}"
             return params.view(-1), gradients.view(-1)
         
