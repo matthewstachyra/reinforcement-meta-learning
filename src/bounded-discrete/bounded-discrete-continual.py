@@ -213,6 +213,29 @@ class InnerNetworkTask(Dataset):
     def __str__(self):
         return f'[INFO] InnerNetworkTask(data={self.data, self.targets}, info={self.info})'
 
+class InnerNetworkTask(Dataset):
+    def __init__(self, data, targets, info):
+        self.data = data 
+        self.targets = targets
+        self.info = info
+
+    def __len__(self):
+        assert len(self.data) == config['n_x'], '[ERROR] Length should be the same as N_X.'
+        return len(self.data)
+
+    def __getitem__(self, index):
+        assert self.data[index].dtype == torch.float32, f'[ERROR] Expected type torch.float32, got type: {self.data[index].dtype}'
+        assert self.targets[index].dtype == torch.float32, f'[ERROR] Expected type torch.float32, got type: {self.targets[index].dtype}'
+        sample = {
+            'x' : self.data[index],
+            'y' : self.targets[index],
+            'info' : self.info[index]
+        }
+        return sample
+    
+    def __str__(self):
+        return f'[INFO] InnerNetworkTask(data={self.data, self.targets}, info={self.info})'
+
 class InnerNetwork(gymnasium.Env, Module):
     def __init__(self, 
                 epoch: int,
