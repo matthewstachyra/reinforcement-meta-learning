@@ -1,0 +1,52 @@
+{
+    "os": "Windows-10-10.0.22621-SP0",
+    "python": "3.10.13",
+    "heartbeatAt": "2023-11-06T22:23:57.502142",
+    "startedAt": "2023-11-06T22:23:51.734207",
+    "docker": null,
+    "cuda": null,
+    "args": [],
+    "state": "running",
+    "program": "<python with no main file>",
+    "codePathLocal": null,
+    "git": {
+        "remote": "git@github.com:matthewstachyra/Meta-learner-RL-for-CNN.git",
+        "commit": "ea3f056286b6fe096f3b7a0e62d4e4e38c1b738c"
+    },
+    "email": "matthew.stachyra@tufts.edu",
+    "root": "C:/Users/stach/Documents/masters-thesis",
+    "host": "matt-windows11",
+    "username": "stach",
+    "executable": "c:\\Users\\stach\\miniconda3\\envs\\masters-thesis\\python.exe",
+    "cpu_count": 8,
+    "cpu_count_logical": 16,
+    "cpu_freq": {
+        "current": 3201.0,
+        "min": 0.0,
+        "max": 3201.0
+    },
+    "cpu_freq_per_core": [
+        {
+            "current": 3201.0,
+            "min": 0.0,
+            "max": 3201.0
+        }
+    ],
+    "disk": {
+        "/": {
+            "total": 580.8232383728027,
+            "used": 489.92806243896484
+        }
+    },
+    "gpu": "NVIDIA GeForce RTX 3060 Laptop GPU",
+    "gpu_count": 1,
+    "gpu_devices": [
+        {
+            "name": "NVIDIA GeForce RTX 3060 Laptop GPU",
+            "memory_total": 6442450944
+        }
+    ],
+    "memory": {
+        "total": 15.405460357666016
+    }
+}
