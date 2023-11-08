@@ -8,3 +8,4 @@ slurm_scripts/
 *.wandb
 *.log
 *.zip
+*.json
