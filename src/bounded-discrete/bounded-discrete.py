@@ -11,9 +11,6 @@ from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
 from torch.nn import Module
 import gymnasium
-from gymnasium import Env
-from gymnasium.spaces.box import Box
-from gymnasium.spaces.discrete import Discrete
 from typing import (
     Type,
     List,
@@ -22,7 +19,7 @@ from typing import (
 import matplotlib.pyplot as plt
 import stable_baselines3
 from sb3_contrib import RecurrentPPO
-from stable_baselines3 import PPO
+from stable_baselines3 import PPO, DQN
 import wandb
 
 # configuration
@@ -31,7 +28,7 @@ default_config = {
     'device' : 'cuda',
     'episodic' : False,
     'epochs' : 5,
-    'timesteps' : 2000,
+    'timesteps' : 10000,
     'n_x' : 100,
     'n_tasks' : 1,
     'in_features' : 1,
@@ -48,8 +45,8 @@ default_config = {
     'action_cache_size' : 5,
     'num_workers' : 0,
     'loss_fn' : torch.nn.MSELoss(),
-    'sb3_model' : 'PPO',
-    'sb3_policy' : 'MlpPolicy',
+    'sb3_model' : 'RecurrentPPO',
+    'sb3_policy' : 'MlpLstmPolicy',
     'log_dir' : 'log',
     }
 parser = argparse.ArgumentParser(description="REML command line")
@@ -90,7 +87,7 @@ tasks_targets = torch.tensor(np.array([
         for a, p in zip(amps, phases)
         ])).float()
 tasks_info = [
-        [{'i' : i, 
+        {'i' : i, 
          'amp' : a, 
          'phase_shift' : p, 
          'lower_bound' : lower_bound, 
@@ -99,9 +96,9 @@ tasks_info = [
          'amplitude_range_upper_bound' : amplitude_range[1], 
          'phase_range_lower_bound' : phase_range[0],
          'phase_range_lower_bound' : phase_range[1]}
-         for _ in X]
         for i, (a, p) in enumerate(zip(amps, phases))
 ]
+print(f'[INFO] Tasks created.')
 print(f'[INFO] Tasks created.')
 
 class RegressionModel(torch.nn.Module):
@@ -221,12 +218,38 @@ class InnerNetworkTask(Dataset):
         sample = {
             'x' : self.data[index],
             'y' : self.targets[index],
-            'info' : self.info[index]
+            'info' : self.info
         }
         return sample
     
     def __str__(self):
         return f'[INFO] InnerNetworkTask(data={self.data, self.targets}, info={self.info})'
+
+# TODO is to move this to utils
+def get_params_and_gradients(layers):
+    num_layers = len(layers)
+    max_num_hidden_layers = config['n_layers_per_network'] - 2
+    num_hidden_layers = num_layers - 2
+    hidden_layers = layers[1:-1]
+    params = [layer.weight.detach() for layer in hidden_layers]
+    gradients = [layer.weight.grad for layer in hidden_layers]
+    if num_hidden_layers < config['n_layers_per_network'] - 2: # zero pad the difference 
+        zero_pad = [torch.zeros((config['n_nodes_per_layer'], config['n_nodes_per_layer']), dtype=torch.float32)] * (max_num_hidden_layers - num_hidden_layers)
+        zero_pad_tensor = torch.stack(zero_pad)
+        if len(params) > 0 and len(gradients) > 0:
+            params = torch.stack(params)
+            gradients = torch.stack(gradients)
+            params = torch.cat((params, zero_pad_tensor))
+            gradients = torch.cat((gradients, zero_pad_tensor)) 
+        else:
+            params = zero_pad_tensor
+            gradients = zero_pad_tensor
+    else:
+        params = torch.stack(params)
+        gradients = torch.stack(gradients)
+    assert params.shape==(max_num_hidden_layers, config['n_nodes_per_layer'], config['n_nodes_per_layer']), f"[ERROR] Expected params shape={max_num_hidden_layers, config['n_nodes_per_layer'], config['n_nodes_per_layer']}, got {params.shape}"
+    return params.view(-1), gradients.view(-1)
+
 class InnerNetwork(gymnasium.Env, Module):
     def __init__(self, 
                 epoch: int,
@@ -252,6 +275,7 @@ class InnerNetwork(gymnasium.Env, Module):
         self.batch_size = batch_size
         self.shuffle = shuffle
         self.action_cache_size = action_cache_size
+        self.alpha = torch.nn.Parameter(torch.Tensor([0.25]))
         self.num_workers = num_workers
         self.prev = defaultdict(lambda: None)
         self.curr = defaultdict(lambda: None)
@@ -264,7 +288,8 @@ class InnerNetwork(gymnasium.Env, Module):
         self.loss_fn = torch.nn.MSELoss()
         self.opt = torch.optim.Adam(self.layers.parameters(), lr=self.learning_rate)
         self.actions_taken = [InnerNetworkAction.TRAIN] * config['action_cache_size']
-        self.state = self.reset()
+        self.next_batch()
+        self.run_inner_network()
         self.observation_space = gymnasium.spaces.box.Box(low=float('-inf'), high=float('inf'), shape=self.build_state().shape)
         self.action_space = gymnasium.spaces.discrete.Discrete(len(self.layer_pool.layers) * 3)
         self.termination = False
@@ -400,7 +425,7 @@ class InnerNetwork(gymnasium.Env, Module):
         self.curr['loss'] = self.loss_fn(self.curr['y'], self.curr['y_hat'])
     
     def build_state(self) -> np.ndarray:
-        task_info = torch.tensor([float(value) for value in self.curr['info'].values()])
+        task_info = torch.tensor([self.task.info['amp'], self.task.info['phase_shift']])
         loss = torch.Tensor([self.curr['loss']])
         _, gradients = get_params_and_gradients(self.layers)
         one_hot_layers = torch.tensor(np.array([1 if self.layer_pool.layers[i] in self.layers else 0 for i in range(len(self.layer_pool.layers))]))
@@ -417,7 +442,7 @@ class InnerNetwork(gymnasium.Env, Module):
             self.curr['y_hat'], 
             layer_indices,
             loss,
-            # gradients,
+            gradients,
             one_hot_layers,
             h
         ), dim=0).detach().numpy()
@@ -427,11 +452,11 @@ class InnerNetwork(gymnasium.Env, Module):
         curr_loss = self.curr['loss']
         loss_delta = prev_loss - curr_loss if prev_loss is not None else curr_loss
         if (self.curr['action_type'] == InnerNetworkAction.ERROR):
-            reward = -1
+            reward = -5
         elif (self.curr['action_type'] == InnerNetworkAction.TRAIN):
-            reward = loss_delta
+            reward = 1 if loss_delta > 0 else -1
         else:
-            reward = loss_delta * (0.99 ** self.timestep)
+            reward = 1 * (0.99 ** self.timestep) if loss_delta > 0 else -1 * (0.99 ** self.timestep)
         self.curr['reward'] = reward
         return reward
 
@@ -445,7 +470,7 @@ class InnerNetwork(gymnasium.Env, Module):
 
     def log(self):
         task_num = str(self.curr['info']['i'].item())
-        if self.timestep%100==0:
+        if self.timestep%100==0 and not config['episodic']:
             wandb.log({ f'running_loss_task{task_num}_per_100steps' : self.cum_loss})
             wandb.log({ f'running_reward_task{task_num}_per_100steps' : self.cum_reward})
             self.cum_loss = 0
@@ -457,6 +482,7 @@ class InnerNetwork(gymnasium.Env, Module):
         wandb.log({ f'reward_task{task_num}_per_step' : self.curr['reward'] })
 
     def reset(self, seed=None) -> np.ndarray:
+        print(f'[INFO] Reset at {self.timestep}')
         self.timestep = 0
         self.cum_reward = 0
         self.cum_loss = 0
@@ -511,10 +537,10 @@ class REML:
                 # each task gets its own network
                 self.env = gymnasium.wrappers.NormalizeObservation(InnerNetwork(epoch, task, self.layer_pool))
                 if i==0:
-                    model = self.model(self.policy, self.env, tensorboard_log=self.log_dir,)
+                    model = self.model(self.policy, self.env, tensorboard_log=self.log_dir, n_epochs=5, batch_size=32, n_steps=32)
                 else: 
                     model.set_env(self.env)
-                model.learn(total_timesteps=self.timesteps, tb_log_name=f'epoch_{epoch}_task_{i}', reset_num_timesteps=True)
+                model.learn(total_timesteps=self.timesteps)
 
 		        # pool update
                 for pool_index in self.env.layers_pool_indices:
@@ -534,20 +560,6 @@ class REML:
                     wandb.log({ f'average_reward_per_episode_task{i}_per_epoch' : sum(self.env.rewards_per_episode) / len(self.env.rewards_per_episode) }) 
                     wandb.log({ f'average_steps_per_episode_task{i}_per_epoch' : sum(self.env.steps_per_episode) / len(self.env.steps_per_episode) }) 
                     wandb.log({ f'errors_per_epoch_task{i}_per_epoch' : self.env.errors })
-                    weight_means = [layer.weight.mean().item() for layer in self.layer_pool.layers]
-                    weight_stds = [layer.weight.std().item() for layer in self.layer_pool.layers]
-                    wandb.log({ f'weight_means_task{i}_per_epoch' : wandb.plot.line_series(
-                        xs=np.arange(epoch),
-                        ys=[[mean]for mean in weight_means],
-                        keys=[f'layer_{i}' for i in range(len(self.layer_pool.layers))], 
-                        title='layer_weight_means',
-                        xname='step')})
-                    wandb.log({ f'weight_stds_task{i}_per_epoch' : wandb.plot.line_series(
-                        xs=np.arange(epoch),
-                        ys=[[std] for std in weight_stds],
-                        keys=[f'layer_{i}' for i in range(len(self.layer_pool.layers))],
-                        title='layer_weight_stds',
-                        xname='step')})
 
                 yhats = self.evaluate_inner_network()
                 plot_name = f'sine_curve_epoch_{epoch}_task_{i}'
@@ -568,6 +580,7 @@ class REML:
                 x = torch.nn.functional.leaky_relu(self.env.layers[i](x))
             y_hats.append(self.env.layers[-1](x))
         return y_hats
+
 if __name__ == "__main__":
     tasks = [InnerNetworkTask(data=tasks_data[i], targets=tasks_targets[i], info=tasks_info[i]) for i in range(config['n_tasks'])]
     pool = LayerPool(layers=layers) if config['pretrain'] else LayerPool(layers=None)
