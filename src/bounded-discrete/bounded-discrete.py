@@ -1,4 +1,3 @@
-import os
 import argparse
 import math
 import random
@@ -15,20 +14,15 @@ import gymnasium
 from gymnasium import Env
 from gymnasium.spaces.box import Box
 from gymnasium.spaces.discrete import Discrete
-from gymnasium.utils.env_checker import check_env
 from typing import (
     Type,
-    OrderedDict,
     List,
     Tuple,
-    Callable,
 )
 import matplotlib.pyplot as plt
 import stable_baselines3
 from sb3_contrib import RecurrentPPO
 from stable_baselines3 import PPO
-from stable_baselines3.common.env_checker import check_env
-from torch.utils.tensorboard import SummaryWriter
 import wandb
 
 # configuration

@@ -3,6 +3,9 @@ wandb_version: 1
 seed:
   desc: null
   value: 41
+n_envs:
+  desc: null
+  value: 4
 device:
   desc: null
   value: cuda
@@ -11,10 +14,10 @@ episodic:
   value: false
 epochs:
   desc: null
-  value: 5
+  value: 10
 timesteps:
   desc: null
-  value: 2000
+  value: 1000
 n_x:
   desc: null
   value: 100
@@ -66,10 +69,10 @@ loss_fn:
   value: MSELoss()
 sb3_model:
   desc: null
-  value: PPO
+  value: RecurrentPPO
 sb3_policy:
   desc: null
-  value: MlpPolicy
+  value: MlpLstmPolicy
 log_dir:
   desc: null
   value: log
@@ -81,7 +84,7 @@ _wandb:
     framework: torch
     is_jupyter_run: true
     is_kaggle_kernel: false
-    start_time: 1699492353.43151
+    start_time: 1699547157.360603
     t:
       1:
       - 1
