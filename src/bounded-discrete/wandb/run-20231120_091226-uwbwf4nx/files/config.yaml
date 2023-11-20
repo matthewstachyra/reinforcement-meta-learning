@@ -51,7 +51,7 @@ action_space_shape:
   - 2
 batch_size:
   desc: null
-  value: 32
+  value: 100
 learning_rate:
   desc: null
   value: 0.05
@@ -81,7 +81,7 @@ _wandb:
     framework: torch
     is_jupyter_run: true
     is_kaggle_kernel: false
-    start_time: 1700420968.819919
+    start_time: 1700489551.665312
     t:
       1:
       - 1
@@ -94,7 +94,6 @@ _wandb:
       - 3
       - 55
       3:
-      - 2
       - 16
       - 23
       4: 3.10.13

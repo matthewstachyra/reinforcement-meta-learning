@@ -1,0 +1,90 @@
+% Template for MS thesis
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Basic setup, modify as needed
+% \documentclass[12pt,twosided]{ic_eee_thesis}
+\documentclass[12pt]{report}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\graphicspath{{images/}} % sets path for graphics
+\usepackage{minitoc}
+
+\usepackage[style=ieee,backend=biber,hyperref=auto]{biblatex}
+\addbibresource{references.bib}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%% END SETUP %%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+% ADDITIONAL PACKAGES
+% You can add your packages below. Note that the following packages are already loaded: pgfcore, geometry, bookmark, graphicx, setspace, kantlipsum, fontspec, polygrossia (default English), minitoc, silence, background, xpatch, tikzpagenodes, totcount, fancyhdr, titlesec and the tikz libraries calc, shapes.symbols and shapes.misc  
+
+%Examples
+\usepackage{amsmath}
+\usepackage{amsfonts} 
+\usepackage{amssymb}
+\usepackage{braket}
+\usepackage{mathtools}
+%...
+
+% ADDITIONAL COMMANDS
+%Examples
+\DeclareMathOperator{\diag}{diag}
+\DeclareMathOperator{\vect}{vec}
+\newcommand{\R}{\mathbb R}
+\DeclarePairedDelimiter{\norm}{\lVert}{\rVert}
+
+
+\begin{document}
+
+% TITLE PAGE STUFF
+\title{
+  {\Large \textbf{Blah Blah Blah}}\\
+  {\normalsize A thesis submitted by}\\
+  {\large Your Name Here}\\
+  {\normalsize in partial fulfillment of the requirements for the degree of}\\
+  {\normalsize Master of Science}\\
+  {\normalsize in}\\
+  {\normalsize Computer Science}\\
+  \vspace{4cm}
+  {\normalsize Tufts University}\\
+  {\normalsize December 2023}\\
+  {\normalsize Advisor: ...}
+  \date{}
+}
+
+\maketitle
+
+% EDIT THE CONTENT OF THE FILES
+\input{chapters/Abstract}
+\input{chapters/Acknowledgement}
+% You can find them under the folder 
+% "chapters" on the left column
+
+% ADD AS MANY CHAPTERS AS NEEDED
+% BY CREATING .TEX FILES IN THE FOLDER chapters
+% AND ADDING \input{namechapter.tex} BELOW
+\input{chapters/Chapter1}
+\input{chapters/Chapter2}
+
+
+\input{chapters/Conclusions}
+% EDIT THE CONTENT OF THE FILE
+% Conclusions.tex
+% You can find it under the folder 
+% "chapters" on the left column
+
+% APPENDICES ARE OPTIONAL
+% COMMENT OUT BOTH LINES BELOW TO REMOVE THEM
+% ADD CHAPTERS TO ADD MULTIPLE APPENDICES
+\appendix 
+\input{chapters/AppendixA.tex}
+%\input{AppendixB.tex} % Example second appendix (need to create the file in "chapters")
+
+
+\cleardoublepage % Do not change - required
+\printbibliography[title={Bibliography},heading=bibintoc] % Dbibliography
+
+\end{document}
