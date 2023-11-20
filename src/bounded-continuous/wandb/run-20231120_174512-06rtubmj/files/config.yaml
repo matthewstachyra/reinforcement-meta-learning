@@ -45,10 +45,6 @@ n_nodes_per_layer:
 pool_layer_type:
   desc: null
   value: torch.nn.modules.linear.Linear
-action_space_shape:
-  desc: null
-  value:
-  - 2
 batch_size:
   desc: null
   value: 100
@@ -73,6 +69,10 @@ sb3_policy:
 log_dir:
   desc: null
   value: wandb
+action_space_shape:
+  desc: null
+  value:
+  - 32
 _wandb:
   desc: null
   value:
@@ -81,7 +81,7 @@ _wandb:
     framework: torch
     is_jupyter_run: true
     is_kaggle_kernel: false
-    start_time: 1700515269.691373
+    start_time: 1700520312.87785
     t:
       1:
       - 1
@@ -94,7 +94,6 @@ _wandb:
       - 3
       - 55
       3:
-      - 2
       - 16
       - 23
       4: 3.10.13
