@@ -9,3 +9,4 @@ slurm_scripts/
 *.log
 *.zip
 *.json
+*.png
