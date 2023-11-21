@@ -5,8 +5,21 @@
 \minitoc 
 
 \section{Artificial Neural Networks}
-Artificial neural networks (ANNs) are non-linear computational models that approximate a target function   $f: \mathbb{R}^n \rightarrow \mathbb{R}^m$, where $n$ and $m$ are integers \cite{Bis:06}. Given a set $X = \{ (x_1, y_1), ..., (x_N, y_N) \} \subset \R^n \times \R^m$ of input-output pairs of size $N$ the model is trained to approximate $f$ such that $f(x_i) = y_i \forall i \in \{1, 2, \ldots, N\}$. By the Universal Approximation theorem, a neural network's approximation of a continuous function is theoretically guaranteed to be as precise as it needs to be given the network has at least one hidden layer with some finite number of nodes \cite{HorStiWhi:89}. \\\\
-Consider the problem of predicting the value of one or more continuous target variables \mathbf{t} provided a D-dimensional vector \mathbf{x} of input variables, or what is called regression. Given a training set consisting of $N$ observations $\set{ \mathbf{x}_1, ..., \mathbf{x}_n }$ and values $\{t_n\}_{n=1}^N$, the objective is to predict the output value for any input $x$ as close as possible to the provided target value \mathbf{t}. The regression function is a linear combination over the input variables 
+Artificial neural networks (ANNs) are non-linear computational models that approximate 
+a target function   $f: \mathbb{R}^n \rightarrow \mathbb{R}^m$, where $n$ and $m$ are 
+integers \cite{Bis:06}. Given a set $X = \{ (x_1, y_1), ..., (x_N, y_N) \} \subset \R^n \times \R^m$
+of input-output pairs of size $N$ the model is trained to approximate $f$ such that 
+$f(x_i) = y_i \forall i \in \{1, 2, \ldots, N\}$. By the Universal Approximation theorem, 
+a neural network's approximation of a continuous function is theoretically guaranteed to be 
+as precise as it needs to be given the network has at least one hidden layer with some 
+finite number of nodes \cite{HorStiWhi:89}. \\\\
+Consider the problem of predicting the value of one or more continuous target variables 
+$\mathbf{t}$ provided a D-dimensional vector $\mathbf{x}$ of input variables, or what 
+is called regression. Given a training set consisting of $N$ observations 
+$\set{ \mathbf{x}_1, ..., \mathbf{x}_n }$ and values $\{t_n\}_{n=1}^N$, the 
+objective is to predict the output value for any input $x$ as close as possible to 
+the provided target value $\mathbf{t}$. The regression function is a linear combination 
+over the input variables 
 \begin{equation} 
     y(\mathbf{x},\mathbf{w}) = w_0 + w_1x_1 + ... + w_Dx_D
 \end{equation}
@@ -59,14 +72,21 @@ Equations (1.5) and (1.6) combined present the equation for a \textit{feed-forwa
 
 
 \subsection{Training a neural network}
-The goal of learning for a neural network is to optimize the weights of the network such that the loss function $E(X, \mathbf{w})$ takes the lowest value. Continuing with the previous example for regression, we look at the sum-of-squares error function 
+The goal of learning for a neural network is to optimize the weights of the network such 
+that the loss function $E(X, \mathbf{w})$ takes the lowest value. Continuing with the 
+previous example for regression, we look at the sum-of-squares error function 
 \begin{equation}
     E(X, \mathbf{w}) = \frac{1}{2}\sum_{n=1}^{N} \norm{y\left(\mathbf{x}_n, \mathbf{w}  \right) - \mathbf{t}_n}^2
 \end{equation}
-There is typically not an analytical solution and iterative procedures are used to minimize the loss function $E$. The steps taken are
+There is typically not an analytical solution and iterative procedures are used to 
+minimize the loss function $E$. The steps taken are
 \begin{equation}
     \mathbf{w}^{(\tau+1)} = \mathbf{w^{(\tau)}} + \Delta \mathbf{w}^{(\tau)}
-\end{equation} where $\tau$ is the iteration step. An approach for the weight update step with $\Delta \mathbf{w}^{(\tau)}$ is to use gradient information where the gradient is of $E(X, \mathbf{w})$ with respect to the parameters $\mathbf{w}$. The weights are updated in the direction of steepest error function decrease or in the $- \nabla E(X, \mathbf{w})$ direction. Equation 1.9 thus becomes
+\end{equation} where $\tau$ is the iteration step. An approach for the weight update step 
+with $\Delta \mathbf{w}^{(\tau)}$ is to use gradient information where the gradient is 
+of $E(X, \mathbf{w})$ with respect to the parameters $\mathbf{w}$. The weights are 
+updated in the direction of steepest error function decrease or in the 
+$- \nabla E(X, \mathbf{w})$ direction. Equation 1.9 thus becomes
 \begin{equation}
      \mathbf{w}^{(\tau+1)} = \mathbf{w^{(\tau)}} + \alpha \nabla E\left( X, \mathbf{w}^{(\tau)} \right)
 \end{equation} where $\alpha > 0$ is the learning rate controlling the size of update step taken. This iterative procedure is called 
@@ -89,6 +109,7 @@ And because $\frac{\partial a_j}{\partial w_{ji}} = z_{i}$ we can write equation
 \begin{equation}
     \frac{\partial E_n}{\partial w_{ji}} =  \delta_{j} z_{i}
 \end{equation}
+
 
 
 
