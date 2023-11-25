@@ -2368,6 +2368,10 @@
     <bcf:citekey order="1" intorder="1">Bis:06</bcf:citekey>
     <bcf:citekey order="2" intorder="1">HorStiWhi:89</bcf:citekey>
     <bcf:citekey order="3" intorder="1">RumHinWil:86</bcf:citekey>
+    <bcf:citekey order="4" intorder="1">RumHinWil:86</bcf:citekey>
+    <bcf:citekey order="5" intorder="1">PasGulChoBen:13</bcf:citekey>
+    <bcf:citekey order="6" intorder="1">Wer:90</bcf:citekey>
+    <bcf:citekey order="7" intorder="1">HocSch:97</bcf:citekey>
   </bcf:section>
   <!-- SORTING TEMPLATES -->
   <bcf:sortingtemplate name="none">

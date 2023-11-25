@@ -1,7 +1,6 @@
 \chapter{Background}
 \label{ch1}
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \minitoc 
 
 \section{Artificial Neural Networks}
@@ -15,15 +14,15 @@ integers \cite{Bis:06}. Given a set $X = \{ (\mathbf{x}_1, \mathbf{y}_1), \ldots
  network has at least one hidden layer with some finite number of nodes \cite{HorStiWhi:89}. 
 
 \subsection{Starting from linear regression}
-
 Consider the problem of predicting the value of one or more continuous target variables 
-$\mathbf{t} \subset \R^m$ provided a D-dimensional vector $\mathbf{x}$ of input variables, or 
-what is called regression. Given a training set consisting of $N$ observations 
-$\{\mathbf{x}_n\}_{n=1}^N$ and values $\{\mathbf{t}_n\}_{n=1}^N$, the objective is to predict 
-the output value for any input vector $\mathbf{x}$ as close as possible to the provided target 
-variable $\mathbf{t}$. 
+$\mathbf{t} \subset \R^m$ provided a $D$-dimensional vector $\mathbf{x}_n$ of input 
+variables, or what is called regression. Given a set consisting of $N$ observation and 
+value pairs $\set{(\mathbf{x}_{n}, \mathbf{t}_{n})}_{n=1}^N$, the objective is to predict 
+the value for any input vector $\mathbf{x}_n$ such that it is as as close as possible 
+to the provided target value $\mathbf{t}_n$. 
 \\\\
-One approach is linear regression, or a linear combination over the input variables 
+One approach is linear regression, or a linear combination over the components of an input
+pattern $\mathbf{x}_n$
 \begin{equation} 
     y(\mathbf{x}_n,\mathbf{w}) = w_0 + w_1x_1 + \ldots + w_Dx_D
 \end{equation}
@@ -46,7 +45,6 @@ Despite producing non linear outputs over the input $\mathbf{x}$ this is \textit
 regression} because it is linear with respect to $\mathbf{w}$.
 
 \subsection{Constructing neural networks}
-
 Basic ANNs can be seen as an extension to linear regression where the basis functions become 
 parameterized. The basis functions continue to be non-linear functions over the linear 
 combination of the input, but now the output of the basis function is dependent on the 
@@ -211,7 +209,6 @@ errors $\delta_{k}$ in the output layer. Using $\delta_{k}$ we can calculate
 $\delta_{j}$ for the hidden units in previous layers. With all errors 
 $\delta$, the gradient is calculated by multiplying the error by the 
 activations $a$ transformed by their non-linear function $h$ where $h(a) = z$.
-\\\\
 \subsection{Recurrent Neural Networks}
 ANNs can be constructed as \textit{directed graphs}, formally defined as $G = (V, E)$ where 
 $V$ is the set of vertices $\set{v_1, \ldots, v_n}$ and $E$ is the set of edges 
@@ -225,22 +222,106 @@ The 2-layer network we constructed above was a \textit{directed acyclic graph}.
 $G \text{ is acyclic if } \forall v \in V, \text{ there does not exist a cycle
 containing } v$. This means that for $\forall (u,v) \in E \text{, } u \neq v$.
 \\\\
-ANNs can contain cycles however. A type of neural network that contains cycles is a 
-\textit{recurrent neural network} (RNN). An RNN is recurrent in that its output is 
-part of forward propagation in the next timestep. 
+ANNs can contain cycles however. A type of ANN that contains cycles is a 
+\textit{recurrent neural network} (RNN) \cite{RumHinWil:86}. An RNN is recurrent in that 
+information persists in the network by being passed from one forward propagation step to 
+the next. This ability to incorporate past network data makes RNNs useful for simulating 
+dynamical systems.
+\\\\
+RNNs model past network data as $\mathbf{h}_{t}$ or the \textit{hidden state}
+\begin{align}
+    &\mathbf{h}_t = f_{h}(\mathbf{x}_t, \mathbf{h}_{t-1}) \\
+    &\mathbf{y}_t = f_{o}(\mathbf{h}_t)
+\end{align} where $f_{h}$ is a transition function parameterized by $\theta_{h}$ 
+and $f_{o}$ is an output function parameterized by $\theta_{o}$ \cite{PasGulChoBen:13}.
+The transition function can be a non-linear function such as the rectified linear unit
+or the sigmoid function.
+\\\\
+Datasets used with RNNs may include $T_n$ many input patterns $\mathbf{x}^{(n)}$
+where $T_n \in \R$ is the number of timesteps for which there is data for the 
+datapoint 
+\begin{equation}
+    \set{(\mathbf{x}_{1}^{(n)}, \mathbf{y}_{1}^{(n)}), \ldots, 
+    (\mathbf{x}_{Tn}^{(n)}, \mathbf{y}_{Tn}^{(n)}) }_{n=1}^N 
+\end{equation}
+The cost function is
+\begin{equation}
+    E(\theta) = \frac{1}{N} \sum_{n=1}^{N} \sum_{t=1}^{T} \\
+    d(\mathbf{y}_t^{(n)}, f_o(\mathbf{h}_t^{(n)}))
+\end{equation} where $\theta$ is the parameters of the network, and 
+$d(\mathbf{a}, \mathbf{b})$ is the divergence measure such as Euclidean distance used 
+in the above sum of squares error. 
+\\\\
+The parameters $\theta$ are updated with a variant of backpropagation that works with
+sequential data called \textit{backpropagation through time (BPTT)} 
+\cite{Wer:90}. This method ``unrolls'' the RNN into each a computational graph one
+time step at a time. This unrolled RNN is equivalent to a deep neural network where the
+same parameters re-appear throughout the network per timestep. Backpropagation through 
+time sums the gradient with respect to each parameter for all times the parameter 
+appears in the network.
+\\\\
+RNNs are prone to challenges during training including \textit{exploding gradient} and 
+\textit{vanishing gradient}. During training with BPTT the gradients can become very 
+large (i.e., exploding) or very small (i.e., vanishing). Calculating the errors involves
+multiplying the errors from later layers by the activations in earlier layers as defined
+above. RNNs can have long sequences in the unrolled network, meaning many multiplication
+operations over the gradients. Multiplying large or small numbers many times will lead to
+very large numbers and very small numbers, respectively.
+\\\\
+A large gradient will cause large weight updates in the gradient update step, such as 
+in gradient descent optimization, which will make training unstable. A small gradient 
+will cause negligent or no weight updates such that no learning happens and hidden unit 
+activation trend to 0. These activations are called \textit{dead neurons} where 
+``neuron'' is another word for a hidden unit.
 
-% In this view, the nodes of a graph (called "neurons") are non-linear functions that 
-% operate on the inputs to it. The edges feeding into a node contain parameters that are multiplied against
-% In neural networks, the directed graph is composed of so called "layers" which are parameterized non-linear functions that applies to the input to the network and then to the output of the preceding layer. 
-% More specifically, the graph's nodes (also called "neurons") are non-linear "activation" functions and the edges are the parameters (also called "weights") of the network.
-% An input x, which may be denoted as (x1, ..., xn) is multiplied by the parameters (w1, ..., wn)^T and added a bias term b to output z. 
-% This is passed to a non-linear "activation" function in the neuron or node a(z) to produce y. 
-% This affine function comes out to be y = a(z) = w^T . x + b. It is often represented as a sum. E_1_n (wi .xi + b).
-% As mentioned earlier, non-linearity is introduced into the network with activation functions that are applied to the immediately preceding linear transformation. A common activation function due to its breadth of applicable use cases is the rectified linear unit, a piecewise linear function that is linear for positive inputs and 0 for negative inputs: f(x) = max(0,x). Another common activation function is the sigmoid function represented as: f(x) = 1 / 1 + e^-x. It bounds the input x to (0, 1). This makes it a common choice for tasks where the output is used to represent a probability. 
+\subsection{Long Short-Term Memory Networks}
+An extension of the RNN is the Long Short-Term Memory Network (LSTM), intended 
+to address the exploding and vanishing gradient problems or ``error back-flow 
+problems''\cite{HocSch:97}. LSTMs introduce additional calculations called ``gates'' 
+within the cells of an RNN. These gates control how much information is retained or
+discarded in each timestep. Each cell has state $C_t$ and the gates responsible for
+modifying $C_t$ across $T_n$ for $(x_{1n}, \ldots, x_{Tn})$.
+\\\\
+The \textit{forget gate} controls the amount of information retained from the previous
+unit $h_{t-1}$ and the input $x_t$ to include in this state $C_t$
+\begin{equation}
+    f_t = \sigma (W_f \cdot [h_{t-1}, x_t] + b_f)
+\end{equation} where $W_f$ is a weight matrix and $b_f$ is the bias term. The sigmoid
+is used as it outputs a value in $[0, 1]$, with $0$ meaning to discard all previous 
+network data and $1$ meaning to keep all previous network data.
+\\\\
+The \textit{input gate} controls the amount of information to be included from the input
+$x_t$ 
+\begin{equation}
+    i_t = \sigma (W_i \cdot [h_{t-1}, x_t] + b_i) 
+\end{equation} where $W_i$ is the weight matrix and $b_i$ is the bias term for this gate,
+respectively.
+\\\\
+The output of the forget gate and input gate are composed as a proposal vector
+that would be added element-wise to $C_t$. 
+\begin{align}
+    \widetilde{C}_t &= \tanh{(W_C \cdot [h_{t-1}, x_t] + b_C)}
+\end{align} where $\widetilde{C}_t$ holds the amount of information to include from 
+$x_t$ and $h_{t-1}$. The $\tanh$ function is the hyperbolic tangent function 
+$\frac{e^{2x} - 1}{e^{2x} + 1}$. It is used to transform $x$ to a value within 
+$[-1, 1]$ that results in more stable gradient calculations.
+\\\\
+The cell state $C_t$ is the sum of the two values we have constructed: some amount of 
+the previous state $C_{t-1}$ and some amount of the proposed $\widetilde{C}_t$.
+\begin{equation}
+    C_t = f_t * C_{t-1} + i_t * \widetilde{C_t}
+\end{equation}
+The final calculation what to output - the new hidden state $h_t$. The cell calculates 
+how much of the new cell state $C_t$ to output for this timesteep.
+\begin{align}
+    o_t &= \sigma (W_o \cdot [h_{t-1}, x_t] + b_o) \\
+    h_t &= o_t * \tanh(C_t)
+\end{align} 
 
-\subsection{Vanishing Gradient Problem}
 \section{Reinforcement Learning}
 \subsection{Markov Decision Processes}
 \subsection{Policy Gradient Methods}
 \subsection{PPO}
+\subsection{Recurrent Policy}
 \section{Meta Learning}
+\subsection{Few shot learning}

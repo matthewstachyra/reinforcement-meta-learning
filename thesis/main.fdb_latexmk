@@ -1,12 +1,13 @@
 # Fdb version 4
-["biber main"] 0 "main.bcf" "main.bbl" "main" 1700759907 -1
-  "./references.bib" 1700507658 2702 d110695b97c6616ad3ca36ed09522b0d ""
-  "main.bcf" 1700759905 107345 7ca27648a74cb434623582028ca3da13 "pdflatex"
+["biber main"] 1700874555 "main.bcf" "main.bbl" "main" 1700874557 0
+  "./references.bib" 1700874555 4459 838fc8757365e32a71e444a2a169b7ff ""
+  "main.bcf" 1700871744 107607 6b8174a1b8ac66a4e3068d65d01fea17 "pdflatex"
+  "references.bib" 1700874555 4459 838fc8757365e32a71e444a2a169b7ff ""
   (generated)
   "main.bbl"
   "main.blg"
   (rewritten before read)
-["pdflatex"] 1700759902 "c:/Users/stach/Documents/masters-thesis/thesis/main.tex" "main.pdf" "main" 1700759907 0
+["pdflatex"] 1700871742 "c:/Users/stach/Documents/masters-thesis/thesis/main.tex" "main.pdf" "main" 1700874557 0
   "C:/Users/stach/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map" 1700523628 80909 eab91d9745dd2edfd62a31d53cd5fe15 ""
   "C:/Users/stach/AppData/Local/MiKTeX/miktex/data/le/pdftex/pdflatex.fmt" 1700523736 24213240 ac73c0aca44f293010b49838b74a1e76 ""
   "C:/Users/stach/AppData/Local/Programs/MiKTeX/fonts/tfm/public/amsfonts/cmextra/cmex7.tfm" 1233951848 1004 54797486969f23fa377b128694d548df ""
@@ -37,6 +38,7 @@
   "C:/Users/stach/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi6.pfb" 1247596666 37166 8ab3487cbe3ab49ebce74c29ea2418db ""
   "C:/Users/stach/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi8.pfb" 1247596666 35469 dcf3a5f2fc1862f5952e3ee5eb1d98c4 ""
   "C:/Users/stach/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr12.pfb" 1247596667 32722 d7379af29a190c3f453aba36302ff5a9 ""
+  "C:/Users/stach/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr6.pfb" 1247596667 32734 69e00a6b65cedb993666e42eedb3d48f ""
   "C:/Users/stach/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr8.pfb" 1247596667 32726 39f0f9e62e84beb801509898a605dbd5 ""
   "C:/Users/stach/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb" 1247596667 32569 5e5ddc8df908dea60932f3c484a54c0d ""
   "C:/Users/stach/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy6.pfb" 1247596667 32587 65067f817f408bc71a7312f3d9828a9b ""
@@ -318,14 +320,14 @@
   "chapters/Abstract.tex" 1700507658 304 00ce5f6c396193a1c800803fd2e14940 ""
   "chapters/Acknowledgement.tex" 1700507658 66 cc0d09db12c89e397e3d8ac9526b54f6 ""
   "chapters/AppendixA.tex" 1700507658 49 44519fac013cd4ad846ae16af5ef13d4 ""
-  "chapters/Chapter1.tex" 1700759901 13866 0c32abf11b7d046052d788cfcb457e96 ""
+  "chapters/Chapter1.tex" 1700871740 17441 6c50512a4ed6f92a1404000914aae84d ""
   "chapters/Chapter2.tex" 1700525025 295 a53a31c2b5270f804f8422360bba86cc ""
   "chapters/Conclusions.tex" 1700507658 104 fca3ff6949186405f8b524a922fb4fa3 ""
-  "main.aux" 1700759905 4201 4187d979d4866b3b74a5b47492f394f0 "pdflatex"
-  "main.bbl" 1700675468 5179 6023f9a9dfa3fe697cb688b686e6c44a "biber main"
-  "main.mtc" 1700759903 0 d41d8cd98f00b204e9800998ecf8427e "pdflatex"
-  "main.mtc0" 1700759903 0 d41d8cd98f00b204e9800998ecf8427e "pdflatex"
-  "main.run.xml" 1700759905 2402 7c866ed2192e71c57464ed4279aadefa "pdflatex"
+  "main.aux" 1700871744 4908 3f82b3a229fc06de1a5f87aa31d50508 "pdflatex"
+  "main.bbl" 1700874557 9220 37b4a98832f5c558fd425878e31c55b2 "biber main"
+  "main.mtc" 1700871743 0 d41d8cd98f00b204e9800998ecf8427e "pdflatex"
+  "main.mtc0" 1700871743 0 d41d8cd98f00b204e9800998ecf8427e "pdflatex"
+  "main.run.xml" 1700871744 2402 7c866ed2192e71c57464ed4279aadefa "pdflatex"
   "main.tex" 1700757552 2465 50252781b8b5278cd00637bb70303c80 ""
   (generated)
   "main.aux"
