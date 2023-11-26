@@ -2372,6 +2372,8 @@
     <bcf:citekey order="5" intorder="1">PasGulChoBen:13</bcf:citekey>
     <bcf:citekey order="6" intorder="1">Wer:90</bcf:citekey>
     <bcf:citekey order="7" intorder="1">HocSch:97</bcf:citekey>
+    <bcf:citekey order="8" intorder="1">SutBar:18</bcf:citekey>
+    <bcf:citekey order="9" intorder="1">Bel:57</bcf:citekey>
   </bcf:section>
   <!-- SORTING TEMPLATES -->
   <bcf:sortingtemplate name="none">

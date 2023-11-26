@@ -1,5 +1,23 @@
-% Write your abstract here
-The abstract is a very brief summary of the dissertation's contents. It should be half a page long at most. Somebody unfamiliar with your project should have a good idea of what it's about having read the abstract alone and will know whether it will be of interest to them.
+A model of some target function is always constrained by available function
+evaluations (data). Trying to learn under the constraint where there are few
+example function evaluations is known as few shot learning. One paradigm applied
+to manage this constraint is meta-learning or ``learning to learn''. This thesis
+contributes a new meta-learning algorithm called reinforcement meta-learning
+(REML). REML casts learning to learn as a markov decision process or
+reinforcement learning problem. It proposes a heirarchical system with an outer
+network that constructs inner networks from a pool of layers. The supervisory system 
+is implemented as a recurrent policy gradient method and the subordinate models are 
+neural networks built by the agent for the regression and classificatin tasks. 
+This is to my knowledge the first work to use reinforcement learning as a meta-learner
+that can learns both parameters and hyperparameters. REML is evaluated on sinuosoidal 
+curves 
+REML is shown to perform transfer 
+learning as well as k=5 and k=10 few shot.
 
+Robust to unrelated tasks? Probably not because the layer pool is set ahead of time
 
-
+One of these may be robustness to learning on unrelated
+tasks, relative to offline trained tasks. I hypothesize that because layers in
+REML are composed individually, they have a more expressive quality in their
+availability to be sequenced in different combinations. This is as opposed to a
+single initial set of policy parameters adapted for each task, as is in MAML.

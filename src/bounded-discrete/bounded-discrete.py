@@ -6,10 +6,8 @@ from collections import defaultdict
 from enum import Enum
 import numpy as np 
 import torch
-import torch.nn.functional as F
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
-from torch.nn import Module
 import gymnasium
 from typing import (
     Type,
@@ -17,37 +15,35 @@ from typing import (
     Tuple,
 )
 import matplotlib.pyplot as plt
-import stable_baselines3
 from sb3_contrib import RecurrentPPO
-from stable_baselines3 import PPO, DQN
+from stable_baselines3 import PPO, A2C
 import wandb
 
 # configuration
 default_config = {
     'seed' : 41,
     'device' : 'cuda',
-    'episodic' : False,
-    'epochs' : 5,
-    'timesteps' : 10000,
+    'pretrain' : False,
+    'episodic' : True,
+    'epochs' : 10,
+    'timesteps' : 1000,
     'n_x' : 100,
-    'n_tasks' : 1,
+    'n_tasks' : 6,
     'in_features' : 1,
     'out_features' : 1,
     'n_pool_hidden_layers' : 10,
+    'n_hidden_layers_per_network' : 3,
     'n_layers_per_network' : 5,
-    'n_nodes_per_layer' : 32,
-    'pretrain' : False,
+    'n_nodes_per_layer' : 40,
     'pool_layer_type' : torch.nn.Linear,
-    'action_space_shape' : (3,),
-    'epsilon' : 0.1,
-    'batch_size' : 1,
-    'learning_rate' : 0.01,
+    'batch_size' : 100,
+    'learning_rate' : 0.05,
     'action_cache_size' : 5,
     'num_workers' : 0,
     'loss_fn' : torch.nn.MSELoss(),
     'sb3_model' : 'RecurrentPPO',
     'sb3_policy' : 'MlpLstmPolicy',
-    'log_dir' : 'log',
+    'log_dir' : 'wandb',
     }
 parser = argparse.ArgumentParser(description="REML command line")
 parser.add_argument('--device', '-d', type=str, default=default_config['device'], help='Device to run computations', required=False)
@@ -59,6 +55,7 @@ parser.add_argument('--log_dir', '-o', type=str, default=default_config['log_dir
 parser.add_argument('--n_tasks', type=int, default=default_config['n_tasks'], help='Number of tasks to generate', required=False)
 parser.add_argument('--n_layers_per_network', type=int, default=default_config['n_layers_per_network'], help='Number of layers per network', required=False)
 parser.add_argument('--pretrain', action='store_true', help='Whether to pretrain layers for layer pool.', required=False)
+parser.add_argument('--episodic', action='store_true', help='Whether to train in episodes rather than continual learning.', required=False)
 args = parser.parse_args()
 config = { key : getattr(args, key, default_value) for key, default_value in default_config.items() }
 
@@ -105,16 +102,16 @@ class RegressionModel(torch.nn.Module):
     def __init__(self):
         super(RegressionModel, self).__init__()
         self.layers = torch.nn.ModuleList([
-            torch.nn.Linear(1, 32),  
-            torch.nn.Linear(32, 32), 
-            torch.nn.Linear(32, 32),  
-            torch.nn.Linear(32, 32),  
-            torch.nn.Linear(32, 1)  
+            torch.nn.Linear(config['in_features'], 40),  
+            torch.nn.Linear(40, 40), 
+            torch.nn.Linear(40, 40),  
+            torch.nn.Linear(40, 40),  
+            torch.nn.Linear(40, config['out_features'])  
         ])
 
     def forward(self, x):
         for i in range(len(self.layers)-1):
-            x = torch.relu(self.layers[i](x))
+            x = torch.nn.functional.relu(self.layers[i](x))
         x = self.layers[-1](x)
         return x
 
@@ -171,6 +168,7 @@ class LayerPool:
     def __str__(self) -> str:
         return f"LayerPool(size={self.size}, layer_type={config['pool_layer_type']}, num_nodes_per_layer={config['n_nodes_per_layer']}"
 
+
 # TODO is to move this to utils
 def get_params_and_gradients(layers):
     num_layers = len(layers)
@@ -198,9 +196,8 @@ def get_params_and_gradients(layers):
 
 class InnerNetworkAction(Enum):
     TRAIN = 0
-    ADDTRAIN= 1
-    DELETETRAIN = 2
-    ERROR = 3
+    ADD = 1
+    ERROR = 2
 
 class InnerNetworkTask(Dataset):
     def __init__(self, data, targets, info):
@@ -209,7 +206,7 @@ class InnerNetworkTask(Dataset):
         self.info = info
 
     def __len__(self):
-        assert len(self.data) == config['n_x'], '[ERROR] Length should be the same as N_X.'
+        assert len(self.data) == config['n_x'], '[ERROR] Length should be the same as n_x.'
         return len(self.data)
 
     def __getitem__(self, index):
@@ -223,17 +220,16 @@ class InnerNetworkTask(Dataset):
         return sample
     
     def __str__(self):
-        return f'[INFO] InnerNetworkTask(data={self.data, self.targets}, info={self.info})'
+        return f'[INFO] InnerNetworkTask(data={self.data}, targets={self.targets}, info={self.info})'
 
-# TODO is to move this to utils
 def get_params_and_gradients(layers):
     num_layers = len(layers)
-    max_num_hidden_layers = config['n_layers_per_network'] - 2
+    max_num_hidden_layers = config['n_hidden_layers_per_network']
     num_hidden_layers = num_layers - 2
     hidden_layers = layers[1:-1]
     params = [layer.weight.detach() for layer in hidden_layers]
     gradients = [layer.weight.grad for layer in hidden_layers]
-    if num_hidden_layers < config['n_layers_per_network'] - 2: # zero pad the difference 
+    if num_hidden_layers < config['n_hidden_layers_per_network']:
         zero_pad = [torch.zeros((config['n_nodes_per_layer'], config['n_nodes_per_layer']), dtype=torch.float32)] * (max_num_hidden_layers - num_hidden_layers)
         zero_pad_tensor = torch.stack(zero_pad)
         if len(params) > 0 and len(gradients) > 0:
@@ -250,16 +246,27 @@ def get_params_and_gradients(layers):
     assert params.shape==(max_num_hidden_layers, config['n_nodes_per_layer'], config['n_nodes_per_layer']), f"[ERROR] Expected params shape={max_num_hidden_layers, config['n_nodes_per_layer'], config['n_nodes_per_layer']}, got {params.shape}"
     return params.view(-1), gradients.view(-1)
 
-class InnerNetwork(gymnasium.Env, Module):
+def get_latent_space(latent_space):
+    flattened_latent_space = latent_space.view(-1)
+    flattened_size = flattened_latent_space.numel()
+    target_size = config['batch_size'] * config['n_nodes_per_layer']
+    if flattened_size < target_size:
+        num_elements_to_pad = target_size - flattened_size
+        padding_tensor = torch.zeros(num_elements_to_pad)
+        padded_tensor = torch.cat((flattened_latent_space, padding_tensor), dim=0)
+        return padded_tensor
+    else:
+        return flattened_latent_space
+
+class InnerNetwork(gymnasium.Env, torch.nn.Module):
     def __init__(self, 
-                epoch: int,
                 task: InnerNetworkTask,
                 layer_pool: LayerPool,
+                epoch: int=0,
                 in_features: int=config['in_features'],
                 out_features: int=config['out_features'],
                 learning_rate: float=config['learning_rate'],
                 batch_size: int=config['batch_size'],
-                epsilon: float=config['epsilon'],
                 action_cache_size: float=config['action_cache_size'],
                 num_workers: int=config['num_workers'],
                 shuffle: bool=True,
@@ -267,7 +274,6 @@ class InnerNetwork(gymnasium.Env, Module):
         super(InnerNetwork, self).__init__()
         self.epoch = epoch
         self.learning_rate = learning_rate
-        self.epsilon = epsilon
         self.layer_pool = layer_pool
         self.task = task
         self.in_features = in_features
@@ -275,7 +281,6 @@ class InnerNetwork(gymnasium.Env, Module):
         self.batch_size = batch_size
         self.shuffle = shuffle
         self.action_cache_size = action_cache_size
-        self.alpha = torch.nn.Parameter(torch.Tensor([0.25]))
         self.num_workers = num_workers
         self.prev = defaultdict(lambda: None)
         self.curr = defaultdict(lambda: None)
@@ -288,20 +293,19 @@ class InnerNetwork(gymnasium.Env, Module):
         self.loss_fn = torch.nn.MSELoss()
         self.opt = torch.optim.Adam(self.layers.parameters(), lr=self.learning_rate)
         self.actions_taken = [InnerNetworkAction.TRAIN] * config['action_cache_size']
-        self.next_batch()
-        self.run_inner_network()
-        self.observation_space = gymnasium.spaces.box.Box(low=float('-inf'), high=float('inf'), shape=self.build_state().shape)
-        self.action_space = gymnasium.spaces.discrete.Discrete(len(self.layer_pool.layers) * 3)
-        self.termination = False
-        # log internal variables
         self.timestep = 0
+        self.epoch_reward = 0 
         self.cum_loss = 0
         self.cum_reward = 0
         self.errors = 0
         self.rewards_per_episode = []
         self.steps_per_episode = []
-        self.weight_means = defaultdict(lambda: [])
-        self.weight_stds = defaultdict(lambda: [])
+        self.eval()
+        self.next_batch()
+        self.run_inner_network()
+        self.observation_space = gymnasium.spaces.box.Box(low=float('-inf'), high=float('inf'), shape=self.build_state().shape)
+        self.action_space = gymnasium.spaces.discrete.Discrete(len(self.layer_pool.layers) + 1)
+        self.termination = False
 
     def step(self, action: np.int64) -> Tuple[torch.Tensor, float, bool, dict]: 
         assert action.shape == (), f'[ERROR] Expected action shape () for scalar {self.action_space.n}, got: {action.shape}'
@@ -313,7 +317,9 @@ class InnerNetwork(gymnasium.Env, Module):
         self.update_inner_network(action)
         self.run_inner_network()
         s_prime = self.build_state()
-        reward = self.reward()
+        reward = self.simple_reward()
+        # reward = self.simple_reward()
+        # reward = self.unregularized_reward()
         self.update_internal_trackers()
         self.log()
 
@@ -326,10 +332,7 @@ class InnerNetwork(gymnasium.Env, Module):
         )
     
     def decide_action_type(self, action: np.int64) -> np.int64:
-        if random.random() < self.epsilon: 
-            action = random.randint(0, self.action_space.n - 1)
         add_action_type = action < self.layer_pool.size
-        delete_action_type = action >= self.layer_pool.size and (action < self.layer_pool.size * 2)
         if (add_action_type):
             if (len(self.layers)==config['n_layers_per_network']):
                 self.curr['action_type'] = InnerNetworkAction.ERROR
@@ -339,15 +342,7 @@ class InnerNetwork(gymnasium.Env, Module):
             elif self.layer_pool.layers[action] in self.layers:
                 self.curr['action_type'] = InnerNetworkAction.ERROR
             else:
-                self.curr['action_type'] = InnerNetworkAction.ADDTRAIN
-        elif (delete_action_type):
-            action = action - self.layer_pool.size
-            if (self.layer_pool.layers[action] not in self.layers):
-                self.curr['action_type'] = InnerNetworkAction.ERROR
-            elif self.layer_pool.layers[action].in_features==self.in_features or self.layer_pool.layers[action].out_features==self.out_features:
-                self.curr['action_type'] = InnerNetworkAction.ERROR
-            else:
-                self.curr['action_type'] = InnerNetworkAction.DELETETRAIN
+                self.curr['action_type'] = InnerNetworkAction.ADD
         else:
             self.curr['action_type'] = InnerNetworkAction.TRAIN
         self.actions_taken.append(self.curr['action_type']) 
@@ -356,7 +351,7 @@ class InnerNetwork(gymnasium.Env, Module):
     
     def update_inner_network(self, action: np.int64) -> None:
         index = self.decide_action_type(action)
-        if (self.curr['action_type']==InnerNetworkAction.ADDTRAIN): 
+        if (self.curr['action_type']==InnerNetworkAction.ADD): 
             new_layer = self.layer_pool.layers[index]
             final_layer = self.layers.pop(-1) 
             final_layer_index = self.layers_pool_indices.pop(-1)
@@ -364,15 +359,6 @@ class InnerNetwork(gymnasium.Env, Module):
             self.layers.append(final_layer) 
             self.layers_pool_indices.append(index)
             self.layers_pool_indices.append(final_layer_index)
-        elif (self.curr['action_type']==InnerNetworkAction.DELETETRAIN):
-            prev_layers_length = len(self.layers)
-            index_within_layers = self.layers_pool_indices.index(index)
-            success = self.layers.pop(index_within_layers)
-            if success:
-                self.layers_pool_indices.pop(index_within_layers)
-            else:
-                raise Exception('[ERROR] Delete on inner network failed.')
-            assert prev_layers_length!=len(self.layers), '[ERROR] Delete on inner network failed.'
             
     def next_batch(self, throw_exception=False) -> None:
         self.prev = self.curr
@@ -380,8 +366,8 @@ class InnerNetwork(gymnasium.Env, Module):
 
         if (throw_exception):
             batch = next(self.data_iter)
-            self.curr['x'] = batch['x']
-            self.curr['y'] = batch['y'] 
+            self.curr['x'] = batch['x'].view(-1, 1)
+            self.curr['y'] = batch['y'].view(-1, 1)
             self.curr['info'] = batch['info']
         else: 
             try:
@@ -391,14 +377,15 @@ class InnerNetwork(gymnasium.Env, Module):
                 self.data_iter = iter(self.data_loader)
                 batch = next(self.data_iter)
             finally:
-                self.curr['x'] = batch['x']
-                self.curr['y'] = batch['y'] 
+                self.curr['x'] = batch['x'].view(-1 ,1)
+                self.curr['y'] = batch['y'].view(-1, 1)
                 self.curr['info'] = batch['info']
     
     def run_inner_network(self) -> None: 
         if self.training:
             self.train()
-            self.opt = torch.optim.Adam(self.layers.parameters(), lr=self.learning_rate) 
+            if self.curr['action_type']==InnerNetworkAction.ADD and len(self.layers) < config['n_layers_per_network']:
+                self.opt = torch.optim.Adam(self.layers.parameters(), lr=self.learning_rate) 
             self.opt.zero_grad()
             self.forward(self.curr['x'])
             loss = self.curr['loss']
@@ -408,25 +395,26 @@ class InnerNetwork(gymnasium.Env, Module):
             params_after = [param.data.clone() for param in self.layers.parameters()]
             for layers_index, (pool_index, param_before, param_after) in enumerate(zip(self.layers_pool_indices, params_before, params_after)):
                 if torch.all(torch.eq(param_before, param_after)):
-                    # print()
                     print('[INFO] Layer in environment not updated.')
                     # print(f'layer pool layer {pool_index} not updated')
                     # print(f'layers layer {self.layers[layers_index]}')
-                    # print(f'weights {self.layers[layers_index].weight}')
-                    # print(f'gradients {self.layers[layers_index].weight.grad}')
+                    # print(f'weights, gradients {self.layers[layers_index].weight}, {self.layers[layers_index].weight.grad}')
         else:
             self.forward(self.curr['x'])
 
-    def forward(self, x) -> None:
+    def forward(self, x) -> torch.tensor:
         for i in range(len(self.layers) - 1): 
-            x = torch.nn.functional.leaky_relu(self.layers[i](x))
+            x = torch.nn.functional.relu(self.layers[i](x))
         self.curr['latent_space'] = x
         self.curr['y_hat'] = self.layers[-1](x) 
-        self.curr['loss'] = self.loss_fn(self.curr['y'], self.curr['y_hat'])
+        y = self.curr['y']
+        self.curr['loss'] = self.loss_fn(y, self.curr['y_hat'])
+        return self.curr['y_hat']
     
     def build_state(self) -> np.ndarray:
-        task_info = torch.tensor([self.task.info['amp'], self.task.info['phase_shift']])
+        task_info = torch.tensor([self.task.info['amp'], self.task.info['phase_shift']]).squeeze()
         loss = torch.Tensor([self.curr['loss']])
+        latent_space = get_latent_space(self.curr['latent_space'])
         _, gradients = get_params_and_gradients(self.layers)
         one_hot_layers = torch.tensor(np.array([1 if self.layer_pool.layers[i] in self.layers else 0 for i in range(len(self.layer_pool.layers))]))
         h = torch.tensor([action_enum.value for action_enum in self.actions_taken[-self.action_cache_size:]])
@@ -434,12 +422,10 @@ class InnerNetwork(gymnasium.Env, Module):
         while len(layer_indices) < config['n_layers_per_network']:
             layer_indices.insert(0, 0)
         layer_indices = torch.tensor(layer_indices)
-
+        
         return torch.concat((
             task_info,
-            self.curr['latent_space'],
-            self.curr['y'],
-            self.curr['y_hat'], 
+            latent_space,
             layer_indices,
             loss,
             gradients,
@@ -447,7 +433,24 @@ class InnerNetwork(gymnasium.Env, Module):
             h
         ), dim=0).detach().numpy()
     
-    def reward(self) -> torch.Tensor:
+    def simple_reward(self) -> torch.Tensor:
+        self.curr['reward'] = self.curr['loss']
+        return self.curr['reward']
+    
+    def regularized_reward(self) -> torch.Tensor:
+        prev_loss = self.prev['loss'] or None
+        curr_loss = self.curr['loss']
+        loss_delta = prev_loss - curr_loss if prev_loss is not None else curr_loss
+        if (self.curr['action_type'] == InnerNetworkAction.ERROR):
+            reward = -5
+        elif (self.curr['action_type'] == InnerNetworkAction.TRAIN):
+            reward = 1 if loss_delta > 0 else -1
+        else:
+            reward = 1 * (0.99 ** self.timestep) if loss_delta > 0 else -1 * (0.99 ** self.timestep)
+        self.curr['reward'] = reward
+        return reward
+    
+    def unregularized_reward(self) -> torch.Tensor:
         prev_loss = self.prev['loss'] or None
         curr_loss = self.curr['loss']
         loss_delta = prev_loss - curr_loss if prev_loss is not None else curr_loss
@@ -463,26 +466,26 @@ class InnerNetwork(gymnasium.Env, Module):
     def update_internal_trackers(self) -> None:
         self.cum_loss += self.curr['loss']
         self.cum_reward += self.curr['reward']
+        self.epoch_reward += self.curr['reward']
         if config['episodic'] and self.curr['action_type']==InnerNetworkAction.ERROR:
             self.steps_per_episode.append(self.timestep)
             self.rewards_per_episode.append(self.cum_reward)
             self.errors += 1
 
     def log(self):
-        task_num = str(self.curr['info']['i'].item())
+        # task_num = str(self.curr['info']['i'].item())
+        task_num = 0
         if self.timestep%100==0 and not config['episodic']:
             wandb.log({ f'running_loss_task{task_num}_per_100steps' : self.cum_loss})
             wandb.log({ f'running_reward_task{task_num}_per_100steps' : self.cum_reward})
             self.cum_loss = 0
             self.cum_reward = 0
-        if (len(self.layers)!=0): wandb.log({ f'pool_indices_task{task_num}_per_step' : wandb.Histogram(torch.tensor(self.layers_pool_indices))})
+        wandb.log({ f'pool_indices_task{task_num}_per_step' : wandb.Histogram(torch.tensor(self.layers_pool_indices))})
         wandb.log({ f'action_types_task{task_num}_per_step' : wandb.Histogram(torch.tensor([e.value for e in self.actions_taken]))})
         wandb.log({ f'num_layers_task{task_num}_per_step' : len(self.layers) })
-        wandb.log({ f'loss_task{task_num}_per_step' : self.curr['loss'] })
-        wandb.log({ f'reward_task{task_num}_per_step' : self.curr['reward'] })
 
     def reset(self, seed=None) -> np.ndarray:
-        print(f'[INFO] Reset at {self.timestep}')
+        # print(f'[INFO] Reset at {self.timestep}')
         self.timestep = 0
         self.cum_reward = 0
         self.cum_loss = 0
@@ -501,88 +504,152 @@ class REML:
         epochs: int=config['epochs'],
         timesteps: int=config['timesteps'],
         device: str=config['device'],
-        overwrite: bool=True,  # TODO is to revisit this param
-        intra_update: bool=True, # TODO is to revisit this param
         log_dir: str=f"./{config['log_dir']}/{config['sb3_model']}_{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}"
         ):
         self.layer_pool = layer_pool
         self.tasks = tasks
         if config['sb3_model']=='PPO':
-            self.model = PPO
+            model = PPO
+        elif config['sb3_model']=='A2C':
+            model = A2C
         elif config['sb3_model']=='RecurrentPPO':
-            self.model = RecurrentPPO
-        elif config['sb3_model']=='DQN':
-            self.model = DQN
+            model = RecurrentPPO
+        dummy_env = self.make_env(tasks[0], layer_pool)
+        self.model = model(policy, dummy_env, tensorboard_log=log_dir, n_epochs=5, batch_size=32, n_steps=32)
+        # self.model = model(policy, dummy_env, tensorboard_log=log_dir)
         self.policy = policy
         self.epochs = epochs
         self.timesteps = timesteps
-        self.device = device
-        self.overwrite = overwrite 
-        self.intra_update = intra_update
+        self.device = device # TODO is to check whether cuda is used as assumed
         self.log_dir = log_dir
+
     
     def __str__(self) -> str:
         return f'REML(model={self.model}, policy={self.policy})'
+    
+    def make_env(self, task, epoch=None) -> gymnasium.Env:
+        return gymnasium.wrappers.NormalizeObservation(InnerNetwork(task, self.layer_pool, epoch=epoch))
 
     def train(self):
         # wraps stablebaselines learn() so we call it n * m times
         # n is the number of epochs where we run all m tasks
         # we use the same policy, swapping out envs for the n tasks, m times. 
-        # therefore the number of steps is (timesteps)*(n)*(m)
         for epoch in range(self.epochs):
             print(f'[INFO] Epoch={epoch + 1}/{self.epochs}')
+
+            epoch_reward = 0
             for i, task in enumerate(self.tasks): 
+                self.task = task
                 print(f'[INFO] Task={i+1}/{len(self.tasks)}')
 
                 # each task gets its own network
-                self.env = gymnasium.wrappers.NormalizeObservation(InnerNetwork(epoch, task, self.layer_pool))
-                if i==0:
-                    model = self.model(self.policy, self.env, tensorboard_log=self.log_dir, n_epochs=5, batch_size=32, n_steps=32)
-                else: 
-                    model.set_env(self.env)
-                model.learn(total_timesteps=self.timesteps)
+                self.env = self.make_env(self.task, epoch=epoch)
+                self.model.set_env(self.env)
+                self.model.learn(total_timesteps=self.timesteps)
 
 		        # pool update
                 for pool_index in self.env.layers_pool_indices:
                     index_within_layers = self.env.layers_pool_indices.index(pool_index)
                     updated_pool_layer = self.env.layers[index_within_layers]
                     self.layer_pool.layers[pool_index] = self.env.layers[index_within_layers]
-                    assert updated_pool_layer.in_features==self.layer_pool.layers[pool_index].in_features, '[ERROR] Pool layer to be updated did not match the environment layer.'
-                    assert updated_pool_layer.out_features==self.layer_pool.layers[pool_index].out_features, '[ERROR] Pool layer to be updated did not match the environment layer.'
+                    assert updated_pool_layer.in_features==self.layer_pool.layers[pool_index].in_features
+                    assert updated_pool_layer.out_features==self.layer_pool.layers[pool_index].out_features
                     env_layer_params = [param.data.clone() for param in self.env.layers.parameters()]
                     corresponding_pool_layer_params = [param.data.clone() for param in torch.nn.ModuleList([self.env.layer_pool.layers[index] for index in self.env.layers_pool_indices]).parameters()]
                     for param_before, param_after in zip(env_layer_params, corresponding_pool_layer_params):
                         if not torch.all(torch.eq(param_before, param_after)):
                             print('[ERROR] Layers in pool not updated.')
 
-                # wandb 
+                # wandb per task
                 if config['episodic']:
                     wandb.log({ f'average_reward_per_episode_task{i}_per_epoch' : sum(self.env.rewards_per_episode) / len(self.env.rewards_per_episode) }) 
                     wandb.log({ f'average_steps_per_episode_task{i}_per_epoch' : sum(self.env.steps_per_episode) / len(self.env.steps_per_episode) }) 
                     wandb.log({ f'errors_per_epoch_task{i}_per_epoch' : self.env.errors })
+                
+                epoch_reward += self.env.epoch_reward
 
-                yhats = self.evaluate_inner_network()
-                plot_name = f'sine_curve_epoch_{epoch}_task_{i}'
-                plot_path = f'{self.log_dir}/{plot_name}.png'  
-                plt.figure()
-                plt.plot(self.env.task.data, [yhat.detach().numpy() for yhat in yhats])
-                plt.plot(self.env.task.data, self.env.task.targets)
-                plt.title(plot_name)
-                plt.savefig(plot_path)
-                wandb.log({plot_name: wandb.Image(plot_path)})
+                # sine curves
+                self.generate_sine_curve(epoch=epoch, task=i, image=True, title='training_sine_curves', args={'label' : f'task_{i}'})
+                plt.plot(self.task.data, self.task.targets, linestyle='--', label='ground truth')
 
-    def evaluate_inner_network(self) -> List[torch.Tensor]:
+            # wandb per epoch
+            wandb.log({ f'total_reward_per_epoch' : self.env.epoch_reward})
+    
+    def evaluate_loss_curves(self, steps=100) -> dict:
+        # generates loss curve over 'steps' per task
+
+        lossperstep_bytask = defaultdict(lambda: [])
+
+        for task in self.tasks: 
+            env = gymnasium.wrappers.NormalizeObservation(InnerNetwork(task, self.layer_pool))
+            self.model.set_env(env, force_reset=False)
+            obs, _ = env.reset()
+
+            while len(env.layers) < config['n_layers_per_network']:
+                action, _ = self.model.predict(obs)
+                obs, _, _, _, _ = env.step(action)
+
+            for _ in range(steps):
+                action, _ = self.model.predict(obs)
+                obs, _, _, _, _ = env.step(action)
+                env.next_batch()
+                yhats = env.forward(env.curr['x'])
+                loss = env.loss_fn(yhats, env.curr['y'] )
+                lossperstep_bytask[task].append(loss)
+
+        return lossperstep_bytask
+
+    def generate_sine_curve(self, env=None, data=None, epoch=None, task=None, image=False, new_figures=False, title=None, args=defaultdict()) -> List:
+        # generates sine curve after 'env.layers' is full, with option to set env, limit to 
+        # subset of env data (for few shot evaluation), and to create png
+
+        if env is not None:
+            self.env = env
+            self.model.set_env(env, force_reset=False)
+
         self.env.eval()
-        y_hats = []
-        for x in X:
-            x = torch.Tensor([x])
-            for i in range(len(self.env.layers) - 1): 
-                x = torch.nn.functional.leaky_relu(self.env.layers[i](x))
-            y_hats.append(self.env.layers[-1](x))
-        return y_hats
+        obs, _ = self.env.reset()
+        
+        while len(self.env.layers)!=config['n_layers_per_network']:
+            action, _ = self.model.predict(obs)
+            obs, _, _, _, _ = self.env.step(action)
+        
+        # if data is specified, wrap in new task
+        # if data is not specified, the iterator is used over set
+        if data is not None:
+            dataset = InnerNetworkTask(data=data[:, 0].clone(), targets=data[:, 1].clone(), info=self.task.info)
+        else: 
+            dataset = self.task
+
+        xs = dataset.data.clone()
+        xs = xs.view(len(xs), 1)
+        for i in range(len(self.env.layers) - 1): 
+            xs = torch.nn.functional.relu(self.env.layers[i](xs))
+        yhats = self.env.layers[-1](xs) 
+
+        if new_figures:
+            plt.figure()
+        plot_title = title if title!=None else f'sine_curve_epoch_{epoch}_task_{task}' if epoch!=None and task!=None else 'sine_curve'
+        plot_path = f'{self.log_dir}/{plot_title}.png'  
+        plt.plot(dataset.data, [yhat.detach().numpy() for yhat in yhats], **args)
+        # plt.plot(dataset.data, dataset.targets, label='ground truth', linestyle='--')
+        plt.title(plot_title)
+        plt.legend()
+
+        if image:
+            plt.savefig(plot_path)
+            wandb.log({plot_title: wandb.Image(plot_path)})
+       
+        xs, yhats = dataset.data, [yhat.detach().numpy() for yhat in yhats]
+        return xs, yhats
 
 if __name__ == "__main__":
     tasks = [InnerNetworkTask(data=tasks_data[i], targets=tasks_targets[i], info=tasks_info[i]) for i in range(config['n_tasks'])]
+    eval_task = random.choice(list(tasks))
+    training_tasks = list(set(tasks) - {eval_task})
     pool = LayerPool(layers=layers) if config['pretrain'] else LayerPool(layers=None)
-    model = REML(layer_pool=pool, tasks=tasks)
-    model.train()
+    reml = REML(layer_pool=pool, tasks=training_tasks)
+
+    reml.train()
+    path = f"meta_{config['sb3_model']}_{datetime.datetime.now().strftime('%H-%M')}"
+    reml.model.save(path)

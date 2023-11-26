@@ -319,7 +319,60 @@ how much of the new cell state $C_t$ to output for this timesteep.
 \end{align} 
 
 \section{Reinforcement Learning}
+An agent exhibiting reinforcement learning (RL) learns from actions it takes in an 
+environment that gives the agent a numerical reward signal for the agent's actions. 
+The environment is represented in terms of states it can take on based on the agent's 
+actions. 
+The action taken in a state yields a new state together with some reward.
+The goal of the agent then is to learn a \textit{policy}, a map from states to actions
+for the environment, that maximizes the cumulative reward over time for the agent.
+As the agent learns this policy, the agent needs to decide when to take an action it 
+knows (i.e, it has taken and knows the value of) and an action it doesn't know \cite{SutBar:18}.
+\\\\
+Reinforcement learning is considered a distinct type of learning to \textit{supervised
+learning} and \textit{unsupervised learning}. The learning considered thus far has been 
+\textit{supervised learning} or learning from labeled examples where the ground truth is known. 
+In this supervised context, the agent or model is given the answer after it acts. The 
+model's task is instead to learn from labeled data such that it can generalize
+or approximate to unseen examples where a label does not exist. 
+RL is not supervied learning because no answer is ever provided to the agent; the agent
+needs to discover its' own answer. 
+RL is also not \textit{unsupervised learning}, where the objective is to find patterns in 
+unlabeled data; while the agent may build a model of the environment it interacts with as
+a kind of pattern recognition, the objective of RL is to maximize the numerical reward
+signal rather than to discover hidden structure.
+\\\\
+A reason reinforcement learning is used over supervised learning is the answer may not 
+be known for a sufficiently complex task. Another reason is its often impractical to 
+provided a full set of representative examples of all states the agent may experience.
 \subsection{Markov Decision Processes}
+The problems solved by RL are often formalized as a markov decision process 
+(MDP) \cite{Bel:57}.
+A markov decision process (MDP) is often used to formalize and model the problems and is
+represented as a 4-tuple $(S, A, P_a, R_a)$ where 
+\begin{itemize}
+    \item $S$ is the set of states or \textit{state space}
+    \item $A=\set{A_s | s \in S}$ is the set of actions or \textit{action space}
+    \item $P$ is $P_a(s, s') = P(s_{t+1} = s' | s, a)$ or \textit{transition function}
+    \item $R_a(s, s')=\set{r | r \in \R}$ is the reward upon transition from state s to state s' or \textit{reward function}
+\end{itemize}
+Consider an agent that interacts with the environment over timesteps 
+$t \in \mathbb{R}_{\geq 0}$. For each timestep $t=0,1,2,\ldots$ the agent is in a state
+$s \in S$ where it can take an action $a \in A_s$ and recieve the reward signal $r_{t+1}$ 
+as it transitions from state $s=s_t$ to state $s'=s_{t+1}$. This sequences would look
+something like
+\begin{equation}
+    S_0, A_0, R_1, S_1, A_1, R_2, \ldots
+\end{equation}
+In a finite MDP where there is a finite number of states in $S$, actions in $A$, and rewards
+in $R$, the random variables for $S$ and $R$ have some probability of occuring in the 
+environment. 
+\\\\
+Consider that transition function has complete information on the dynamics of the 
+environment. For this to be true, $\forall s \in S$, $s$ has a history of all seqeuences 
+possible from that state. The probability of the next state $s_{t+1}$ only depends 
+on $s_{t}$ and $a_s$. The past history of states and action transitions is not needed.
+This condition is the \textit{Markov property}.
 \subsection{Policy Gradient Methods}
 \subsection{PPO}
 \subsection{Recurrent Policy}
