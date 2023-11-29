@@ -319,15 +319,18 @@ how much of the new cell state $C_t$ to output for this timesteep.
 \end{align} 
 
 \section{Reinforcement Learning}
-An agent exhibiting reinforcement learning (RL) learns from actions it takes in an 
-environment that gives the agent a numerical reward signal for the agent's actions. 
+An agent exhibiting reinforcement learning (RL) learns from interacting with an 
+environment. 
 The environment is represented in terms of states it can take on based on the agent's 
 actions. 
-The action taken in a state yields a new state together with some reward.
-The goal of the agent then is to learn a \textit{policy}, a map from states to actions
-for the environment, that maximizes the cumulative reward over time for the agent.
-As the agent learns this policy, the agent needs to decide when to take an action it 
-knows (i.e, it has taken and knows the value of) and an action it doesn't know \cite{SutBar:18}.
+This environment gives the agent a numerical reward signal based on the state-action pair.
+The agent continues to take actions within the environment, trying to maximize its
+cumulative reward.
+\\\\
+In reinforcement learning, the learning objective of the agent then is to learn 
+a \textit{policy} $\pi$, a map from each state $s \in S$ and action $a \in A_{s}$ to 
+the probability of $\pi(a|s)$ of taking action $a$ in state $s$ that maximizes cumulative
+reward over timesteps $t$.
 \\\\
 Reinforcement learning is considered a distinct type of learning to \textit{supervised
 learning} and \textit{unsupervised learning}. The learning considered thus far has been 
@@ -346,33 +349,109 @@ A reason reinforcement learning is used over supervised learning is the answer m
 be known for a sufficiently complex task. Another reason is its often impractical to 
 provided a full set of representative examples of all states the agent may experience.
 \subsection{Markov Decision Processes}
-The problems solved by RL are often formalized as a markov decision process 
+Consider an agent that interacts with the environment over timesteps 
+$t \in \mathbb{R}_{\geq 0}$. For each timestep $t=0,1,2,\ldots$ the agent is in a state
+$s \in S$ where it can take an action $a \in A_s$ and recieve the reward signal $r_{t+1}$ 
+as it transitions from state $s=s_t$ to state $s'=s_{t+1}$. This sequence would look
+something like
+\begin{equation}
+    S_0, A_0, R_1, S_1, A_1, R_2, \ldots
+\end{equation}
+The state is the information the agent has about the environment. It is based on this
+state that the agent takes an action and enters a new state -- and this
+process of taking an action from a state to a new state repeats. Therefore, the state
+needs to encode information that allows a decision in the context of how the agent is doing 
+doing in the environment.
+\\\\
+This information is more than the immediate sensations provided by the environment but must
+include relevant information about the sequence thus far (i.e., the history) of the agent's 
+interactions with the environment. A state is said to be \textit{Markov} if it encodes
+all previous states' information as relevant to take the next action in the current state.
+\\\\
+In other words, $\forall s \in S$, $s$ incorporates information (history) of the seqeuence
+to the current state.
+The probability of the next state $s_{t+1}$ only depends on $s_{t}$ and $a_s$. 
+The past history of states and action transitions is not needed.
+This condition is the \textit{Markov property}. 
+\\\\
+When a state is Markov, it has complete information on the dynamics of the 
+environment
+\begin{equation}
+    p(s', r | s, a) = P\set{R_{t+1}=r, S_{t+1}=s'|S_t, A_t}
+\end{equation} where the probability of the environment continuing to state 
+$s'$ depends only on this state $s_{t}$ and action $a_{t}$. 
+For this to be true, $\forall s \in S$, $s$ has a history of all seqeuences 
+possible from that state. 
+\\\\
+RL problems that have the Markov property can be modelled as Markov Decision Processes 
 (MDP) \cite{Bel:57}.
-A markov decision process (MDP) is often used to formalize and model the problems and is
-represented as a 4-tuple $(S, A, P_a, R_a)$ where 
+A markov decision process (MDP) is represented as a 4-tuple $(S, A, P_a, R_a)$ where 
 \begin{itemize}
     \item $S$ is the set of states or \textit{state space}
     \item $A=\set{A_s | s \in S}$ is the set of actions or \textit{action space}
     \item $P$ is $P_a(s, s') = P(s_{t+1} = s' | s, a)$ or \textit{transition function}
     \item $R_a(s, s')=\set{r | r \in \R}$ is the reward upon transition from state s to state s' or \textit{reward function}
 \end{itemize}
-Consider an agent that interacts with the environment over timesteps 
-$t \in \mathbb{R}_{\geq 0}$. For each timestep $t=0,1,2,\ldots$ the agent is in a state
-$s \in S$ where it can take an action $a \in A_s$ and recieve the reward signal $r_{t+1}$ 
-as it transitions from state $s=s_t$ to state $s'=s_{t+1}$. This sequences would look
-something like
+The goal of the agent is to maximize the reward signal over timesteps $t$ where
+$t \in T, \quad T \subseteq \R$. The reward value $r_t \in \R$ is rewarded by the 
+environment to the agent every timestep.
+This accummulated value is called the \textit{return}. 
 \begin{equation}
-    S_0, A_0, R_1, S_1, A_1, R_2, \ldots
+    G_t = R_{t+1} + R_{t+2} + R_{t+3} + \ldots + R_{T}
 \end{equation}
-In a finite MDP where there is a finite number of states in $S$, actions in $A$, and rewards
-in $R$, the random variables for $S$ and $R$ have some probability of occuring in the 
-environment. 
+This equation for the return works if the time horizon of the agent's experience is finite.
+This is the case when experience have a termination condition that concludes the agent's 
+trajectory. A learning experience that ends with a finite $T$ is called an \textit{episode}
+as in \textit{episodic learning}. This type of learning fits tasks that have a natural
+endpoint, such as a car parking itself in a valid spot.
+A learning experience without a boundary like this is called a \textit{continuing task}.
+However, if $T = \infty$ then the the return could be infinite. \\\\
+Another problem with the above formulation for return is it provides equal weighting to
+all rewards. 
+A \textit{discount factor} is often added to the calculation to produce a finite sum
+\begin{align}
+    G_t &= R_{t+1} + \gamma R_{t+2} + \gamma^{2} R_{t+3} + \ldots + \gamma^{T-1}R_{T} \\
+    &= \sum_{k=0}^\infty \gamma^{k} R_{t+k+1}
+\end{align}
+where the discount factor $\gamma$ is typically a number between $0$ and $1$. The 
+addition of a discount factor transforms the reward contribution to the return such that
+a reward $k$ time steps into the future is only worth $\gamma^{k-1}$ as much. The reward
+is in this sense ``discounted''. 
 \\\\
-Consider that transition function has complete information on the dynamics of the 
-environment. For this to be true, $\forall s \in S$, $s$ has a history of all seqeuences 
-possible from that state. The probability of the next state $s_{t+1}$ only depends 
-on $s_{t}$ and $a_s$. The past history of states and action transitions is not needed.
-This condition is the \textit{Markov property}.
+Values closer to $0$ will make the agent ``myopic'' in the sense the agent only takes into
+account the immediate reward and zeroes all subseqeuent rewards after $s_{t+1}$. 
+In this configuration, the agent learns only from the next action it takes and is unable 
+to learn sequences of actions that lead to some future state. 
+\\\\
+Values closer to $1$, on the other hand, increasingly weigh future actions further
+in the trajectory. A value of $1$, as discussed above, would mean each action is weighed
+equally; therefore, values closer to $1$ such $0.95 \text{ or } 0.90$ provide more weight to 
+actions near $T$.
+\\\\
+The discount factor is tuned to reach a balance between a focus on near-term rewards and 
+longer-term rewards. It helps address the problem of \textit{temporal credit assignment} 
+or the difficulty attributing credit to past action(s) for an observed return. 
+Part of the challenge is the delay from the timestep $t$ an action$a_t$ is taken at and 
+when the return is calculated $T$. 
+In other words, the environment may pass through multiple timesteps before the effect of 
+an action is observed.
+The problem can be framed as figuring out the influence of each action on the return. 
+Using a discount factor spreads the credit across timesteps as a measure of the reward and
+how far into the future actions are from the current timestep.
+\subsection{Value Functions}
+As an agent interacts within its environment taking actions, the agent needs a way to
+decide what next action $a_t$ to take in its state $s_t$. The value is decided in 
+terms of the expected return discussed above. 
+\\\\
+There are two kinds of functions to approximate value depending on whether the input
+is the state $s_t$ or the state-action pair $(s_t, a_t)$. 
+\\\\
+The value of a state is 
+\begin{equation}
+    v_{\pi}(s) = \mathbb{E}_{\pi}[G_{t}|S_{t}=s] = \mathbb{E} \left[ \sum_{k=0}^{\infty} \gamma_{k}R_{t+k+1w}|S_{t}=s \right]
+\end{equation} where $\mathbb{E}\left[ \cdot \right]$ is the expected value of a random variable 
+provided the agent follows policy $\pi$ at timestep $t$.
+
 \subsection{Policy Gradient Methods}
 \subsection{PPO}
 \subsection{Recurrent Policy}

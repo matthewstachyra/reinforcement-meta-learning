@@ -232,35 +232,6 @@
       \field{pages}{1735\bibrangedash 1780}
       \range{pages}{46}
     \endentry
-    \entry{SutBar:18}{book}{}
-      \name{author}{2}{}{%
-        {{hash=eb920e5277d3d5fd0903f3cd41e11871}{%
-           family={Sutton},
-           familyi={S\bibinitperiod},
-           given={Richard\bibnamedelima S},
-           giveni={R\bibinitperiod\bibinitdelim S\bibinitperiod}}}%
-        {{hash=32a0a208f8bcf56a13b0a8e618aa806a}{%
-           family={Barto},
-           familyi={B\bibinitperiod},
-           given={Andrew\bibnamedelima G},
-           giveni={A\bibinitperiod\bibinitdelim G\bibinitperiod}}}%
-      }
-      \list{publisher}{1}{%
-        {MIT press}%
-      }
-      \strng{namehash}{c6212f1a1407d96a3d9f4fefbb07eade}
-      \strng{fullhash}{c6212f1a1407d96a3d9f4fefbb07eade}
-      \strng{bibnamehash}{c6212f1a1407d96a3d9f4fefbb07eade}
-      \strng{authorbibnamehash}{c6212f1a1407d96a3d9f4fefbb07eade}
-      \strng{authornamehash}{c6212f1a1407d96a3d9f4fefbb07eade}
-      \strng{authorfullhash}{c6212f1a1407d96a3d9f4fefbb07eade}
-      \field{sortinit}{8}
-      \field{sortinithash}{a231b008ebf0ecbe0b4d96dcc159445f}
-      \field{labelnamesource}{author}
-      \field{labeltitlesource}{title}
-      \field{title}{Reinforcement learning: An introduction}
-      \field{year}{2018}
-    \endentry
     \entry{Bel:57}{article}{}
       \name{author}{1}{}{%
         {{hash=7bb51e859e70aaedef4ed1f3bb67779b}{%
@@ -278,8 +249,8 @@
       \strng{authorbibnamehash}{7bb51e859e70aaedef4ed1f3bb67779b}
       \strng{authornamehash}{7bb51e859e70aaedef4ed1f3bb67779b}
       \strng{authorfullhash}{7bb51e859e70aaedef4ed1f3bb67779b}
-      \field{sortinit}{9}
-      \field{sortinithash}{0a5ebc79d83c96b6579069544c73c7d4}
+      \field{sortinit}{8}
+      \field{sortinithash}{a231b008ebf0ecbe0b4d96dcc159445f}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{journaltitle}{Journal of mathematics and mechanics}
