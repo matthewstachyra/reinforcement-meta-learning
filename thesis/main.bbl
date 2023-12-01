@@ -259,6 +259,102 @@
       \field{pages}{679\bibrangedash 684}
       \range{pages}{6}
     \endentry
+    \entry{ThrunPratt:98}{incollection}{}
+      \name{author}{2}{}{%
+        {{hash=5112ea130eadef0764fce0145b8b9f91}{%
+           family={Thrun},
+           familyi={T\bibinitperiod},
+           given={Sebastian},
+           giveni={S\bibinitperiod}}}%
+        {{hash=c8da884fe2afbe6bd663c09268852663}{%
+           family={Pratt},
+           familyi={P\bibinitperiod},
+           given={Lorien},
+           giveni={L\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {Springer}%
+      }
+      \strng{namehash}{3effb0a63261b791465f7f590a922cd0}
+      \strng{fullhash}{3effb0a63261b791465f7f590a922cd0}
+      \strng{bibnamehash}{3effb0a63261b791465f7f590a922cd0}
+      \strng{authorbibnamehash}{3effb0a63261b791465f7f590a922cd0}
+      \strng{authornamehash}{3effb0a63261b791465f7f590a922cd0}
+      \strng{authorfullhash}{3effb0a63261b791465f7f590a922cd0}
+      \field{sortinit}{9}
+      \field{sortinithash}{0a5ebc79d83c96b6579069544c73c7d4}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{booktitle}{Learning to learn}
+      \field{title}{Learning to learn: Introduction and overview}
+      \field{year}{1998}
+      \field{pages}{3\bibrangedash 17}
+      \range{pages}{15}
+    \endentry
+    \entry{ZophQuoc:16}{article}{}
+      \name{author}{2}{}{%
+        {{hash=91aafc93e68e8c6a55e8cd804c2acaf2}{%
+           family={Zoph},
+           familyi={Z\bibinitperiod},
+           given={Barret},
+           giveni={B\bibinitperiod}}}%
+        {{hash=c636f146591d51579a8119b777394878}{%
+           family={Le},
+           familyi={L\bibinitperiod},
+           given={Quoc\bibnamedelima V},
+           giveni={Q\bibinitperiod\bibinitdelim V\bibinitperiod}}}%
+      }
+      \strng{namehash}{7b5b7588650936405aaf8743b8edaff2}
+      \strng{fullhash}{7b5b7588650936405aaf8743b8edaff2}
+      \strng{bibnamehash}{7b5b7588650936405aaf8743b8edaff2}
+      \strng{authorbibnamehash}{7b5b7588650936405aaf8743b8edaff2}
+      \strng{authornamehash}{7b5b7588650936405aaf8743b8edaff2}
+      \strng{authorfullhash}{7b5b7588650936405aaf8743b8edaff2}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{arXiv preprint arXiv:1611.01578}
+      \field{title}{Neural architecture search with reinforcement learning}
+      \field{year}{2016}
+    \endentry
+    \entry{FinAbbLev:17}{inproceedings}{}
+      \name{author}{3}{}{%
+        {{hash=058e82495825ae376c6a96a12169e6ee}{%
+           family={Finn},
+           familyi={F\bibinitperiod},
+           given={Chelsea},
+           giveni={C\bibinitperiod}}}%
+        {{hash=e28d4ee199593959d8c29980a64f1974}{%
+           family={Abbeel},
+           familyi={A\bibinitperiod},
+           given={Pieter},
+           giveni={P\bibinitperiod}}}%
+        {{hash=c9545da54b33744da25943cdf66eadac}{%
+           family={Levine},
+           familyi={L\bibinitperiod},
+           given={Sergey},
+           giveni={S\bibinitperiod}}}%
+      }
+      \list{organization}{1}{%
+        {PMLR}%
+      }
+      \strng{namehash}{8fd1a9b285463d1536dcb64b4011a015}
+      \strng{fullhash}{8fd1a9b285463d1536dcb64b4011a015}
+      \strng{bibnamehash}{8fd1a9b285463d1536dcb64b4011a015}
+      \strng{authorbibnamehash}{8fd1a9b285463d1536dcb64b4011a015}
+      \strng{authornamehash}{8fd1a9b285463d1536dcb64b4011a015}
+      \strng{authorfullhash}{8fd1a9b285463d1536dcb64b4011a015}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{booktitle}{International conference on machine learning}
+      \field{title}{Model-agnostic meta-learning for fast adaptation of deep networks}
+      \field{year}{2017}
+      \field{pages}{1126\bibrangedash 1135}
+      \range{pages}{10}
+    \endentry
   \enddatalist
 \endrefsection
 \endinput

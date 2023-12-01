@@ -1,23 +1,24 @@
-A model of some target function is always constrained by available function
-evaluations (data). Trying to learn under the constraint where there are few
-example function evaluations is known as few shot learning. One paradigm applied
-to manage this constraint is meta-learning or ``learning to learn''. This thesis
-contributes a new meta-learning algorithm called reinforcement meta-learning
-(REML). REML casts learning to learn as a markov decision process or
-reinforcement learning problem. It proposes a heirarchical system with an outer
-network that constructs inner networks from a pool of layers. The supervisory system 
-is implemented as a recurrent policy gradient method and the subordinate models are 
-neural networks built by the agent for the regression and classificatin tasks. 
+\noindent Meta learning or ``learning to learn" is often applied to training under the 
+constraint where there are few example function evaluations, or \textit{few shot
+learning}. 
+This thesis contributes a new meta-learning algorithm called reinforcement meta-learning
+(REML). 
+REML casts learning to learn as a markov decision process.
+It proposes a system with an outer network that constructs inner networks 
+from a pool of layers for tasks. 
+The outer network is implemented as a recurrent policy gradient method and the 
+inner networks are appropriate to the task.
 This is to my knowledge the first work to use reinforcement learning as a meta-learner
-that can learns both parameters and hyperparameters. REML is evaluated on sinuosoidal 
-curves 
-REML is shown to perform transfer 
-learning as well as k=5 and k=10 few shot.
-
-Robust to unrelated tasks? Probably not because the layer pool is set ahead of time
-
-One of these may be robustness to learning on unrelated
-tasks, relative to offline trained tasks. I hypothesize that because layers in
-REML are composed individually, they have a more expressive quality in their
-availability to be sequenced in different combinations. This is as opposed to a
-single initial set of policy parameters adapted for each task, as is in MAML.
+in a model agnostic fashion (i.e., can work for regression, classification, and 
+reinforcement learning). Previous works have either user RL as a meta learner for other
+RL tasks or use RL to search hyperparameter space. REML searches parameter space for
+theoretically any task that can a neural network can approximate a function for.
+REML is evaluated on sinuosoidal in the same design as the MAML paper. 
+REML shows transfer learning as it converges more quickly than a network trained 
+from scratch across tasks. 
+REML shows meta learning as it can approximate curves with k=5 and k=10 datapoints 
+for unseen tasks. 
+An advantage of REML over other meta-learning algorithms is in the access
+to past trajectories and the global layer pool, which enable it to generalize and handle
+unseen tasks.
+\clearpage
