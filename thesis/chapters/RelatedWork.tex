@@ -4,15 +4,19 @@
 \minitoc 
 The REML algorithm proposed in this thesis is deep reinforcement 
 learning for meta-learning. 
-Related work includes the research 
-where reinforcement learning is applied to meta-learning, and more
-generally, popular meta-learning algorithms in recent years. 
-REML is
-unlike most meta-learning research in its use of RL as the meta-learning agent,
+Related work includes the research where reinforcement learning is applied to 
+meta-learning, and more generally, popular meta-learning algorithms in recent years. 
+REML is unlike most meta-learning research in its use of RL as the meta-learning agent,
 rather than adapting a meta-learning agent to RL. Algorithms that have used
 RL as the meta-learning agent are typically limited to RL tasks (CITE). REML is 
 unique in adapting parameters with RL for non-RL tasks. For this reason, REML is 
 \textit{Reinforcement} Meta-Learning and not Meta Reinforcement Learning. 
+\\\\
+RL$^2$ is perhaps the most similar work to REML in that it frames the learning process
+as the RL agent's objective \cite{DuaSchCheBarSutAbb:16}. It frames learning a new 
+algorithm as a reinforcement learning problem. 
+The difference is that the new algorithm learned is limited to reinforcement learning 
+tasks, hence the work is called RL$^2$.
 \\\\ 
 REML has parallels to neural architecture search (NAS) in searching a space for
 a configuration to build a neural network with. The difference is that the configuration

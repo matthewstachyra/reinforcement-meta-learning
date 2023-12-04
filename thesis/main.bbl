@@ -291,6 +291,53 @@
       \field{pages}{3\bibrangedash 17}
       \range{pages}{15}
     \endentry
+    \entry{DuaSchCheBarSutAbb:16}{article}{}
+      \name{author}{6}{}{%
+        {{hash=beba2607fa3b01b069f484075d0b9cf2}{%
+           family={Duan},
+           familyi={D\bibinitperiod},
+           given={Yan},
+           giveni={Y\bibinitperiod}}}%
+        {{hash=3e09bd2a25d237ebdaed560a07c0451e}{%
+           family={Schulman},
+           familyi={S\bibinitperiod},
+           given={John},
+           giveni={J\bibinitperiod}}}%
+        {{hash=c6649d02b24225ca4c9012cee6c790de}{%
+           family={Chen},
+           familyi={C\bibinitperiod},
+           given={Xi},
+           giveni={X\bibinitperiod}}}%
+        {{hash=51fc11adc82c5171e6b03bb04073d8e6}{%
+           family={Bartlett},
+           familyi={B\bibinitperiod},
+           given={Peter\bibnamedelima L},
+           giveni={P\bibinitperiod\bibinitdelim L\bibinitperiod}}}%
+        {{hash=8d569d1d5b8b5a7836017a98b430f959}{%
+           family={Sutskever},
+           familyi={S\bibinitperiod},
+           given={Ilya},
+           giveni={I\bibinitperiod}}}%
+        {{hash=e28d4ee199593959d8c29980a64f1974}{%
+           family={Abbeel},
+           familyi={A\bibinitperiod},
+           given={Pieter},
+           giveni={P\bibinitperiod}}}%
+      }
+      \strng{namehash}{ddc01360994f800c57af62d3799f5d7b}
+      \strng{fullhash}{e060b1c7472006060dc86b37ca5995c2}
+      \strng{bibnamehash}{e060b1c7472006060dc86b37ca5995c2}
+      \strng{authorbibnamehash}{e060b1c7472006060dc86b37ca5995c2}
+      \strng{authornamehash}{ddc01360994f800c57af62d3799f5d7b}
+      \strng{authorfullhash}{e060b1c7472006060dc86b37ca5995c2}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{arXiv preprint arXiv:1611.02779}
+      \field{title}{Rl2: Fast reinforcement learning via slow reinforcement learning}
+      \field{year}{2016}
+    \endentry
     \entry{ZophQuoc:16}{article}{}
       \name{author}{2}{}{%
         {{hash=91aafc93e68e8c6a55e8cd804c2acaf2}{%

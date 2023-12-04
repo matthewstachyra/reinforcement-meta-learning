@@ -2374,8 +2374,9 @@
     <bcf:citekey order="7" intorder="1">HocSch:97</bcf:citekey>
     <bcf:citekey order="8" intorder="1">Bel:57</bcf:citekey>
     <bcf:citekey order="9" intorder="1">ThrunPratt:98</bcf:citekey>
-    <bcf:citekey order="10" intorder="1">ZophQuoc:16</bcf:citekey>
-    <bcf:citekey order="11" intorder="1">FinAbbLev:17</bcf:citekey>
+    <bcf:citekey order="10" intorder="1">DuaSchCheBarSutAbb:16</bcf:citekey>
+    <bcf:citekey order="11" intorder="1">ZophQuoc:16</bcf:citekey>
+    <bcf:citekey order="12" intorder="1">FinAbbLev:17</bcf:citekey>
   </bcf:section>
   <!-- SORTING TEMPLATES -->
   <bcf:sortingtemplate name="none">
