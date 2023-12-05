@@ -1,0 +1,29 @@
+\chapter{Method}
+\label{Method}
+\section{Preliminaries}
+\section{Formulation}
+\section{Policy Representation}
+\section{Policy Optimization}
+\section{Design}
+\section{Algorithm}
+\section{Implementation}
+REML was implemented using Pytorch for the layers and functions comprising the 
+inner networks and Stablebaselines3 with its open-source implementations of deep RL 
+algorithm for the meta-policy \cite{RafHilGleKanErnDor:21}. 
+Stablebaselines3 was developed by researchers with the intent to 
+provide reliable baselines given recent findings that deep RL results are hard to 
+reproduce. The same algorithms produce different results depending on seed and 
+other minor choices made in the implementation \cite{HenIslBacPinPreMeg:18}. 
+In fact, these differences were found to be greater in some cases than the differences between
+deep RL algorithms \cite{EngIlySanTsi:20}. Stablebaselines3 benchmarks their implementations
+on common environments used in research and compares theirs to other implementations.
+\\\\
+Computations were carried out using the Tufts University High Performance Cluster (HPC) 
+with 1 P100 GPU for batch jobs running about 4 hours for the regression and 12
+hours for the classification tasks.
+\\\\
+Data was captured using Tensorboard and Weights \& Biases (wandb) 
+\cite{tensorflow2015-whitepaper, wandb}.
+
+
+\minitoc 

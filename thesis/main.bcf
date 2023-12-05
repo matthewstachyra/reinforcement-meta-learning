@@ -2365,18 +2365,24 @@
     <bcf:datasource type="file" datatype="bibtex" glob="false">references.bib</bcf:datasource>
   </bcf:bibdata>
   <bcf:section number="0">
-    <bcf:citekey order="1" intorder="1">Bis:06</bcf:citekey>
-    <bcf:citekey order="2" intorder="1">HorStiWhi:89</bcf:citekey>
-    <bcf:citekey order="3" intorder="1">RumHinWil:86</bcf:citekey>
-    <bcf:citekey order="4" intorder="1">RumHinWil:86</bcf:citekey>
-    <bcf:citekey order="5" intorder="1">PasGulChoBen:13</bcf:citekey>
-    <bcf:citekey order="6" intorder="1">Wer:90</bcf:citekey>
-    <bcf:citekey order="7" intorder="1">HocSch:97</bcf:citekey>
-    <bcf:citekey order="8" intorder="1">Bel:57</bcf:citekey>
-    <bcf:citekey order="9" intorder="1">ThrunPratt:98</bcf:citekey>
-    <bcf:citekey order="10" intorder="1">DuaSchCheBarSutAbb:16</bcf:citekey>
-    <bcf:citekey order="11" intorder="1">ZophQuoc:16</bcf:citekey>
-    <bcf:citekey order="12" intorder="1">FinAbbLev:17</bcf:citekey>
+    <bcf:citekey order="1" intorder="1">DuaSchCheBarSutAbb:16</bcf:citekey>
+    <bcf:citekey order="2" intorder="1">ZophQuoc:16</bcf:citekey>
+    <bcf:citekey order="3" intorder="1">FinAbbLev:17</bcf:citekey>
+    <bcf:citekey order="4" intorder="1">Bis:06</bcf:citekey>
+    <bcf:citekey order="5" intorder="1">HorStiWhi:89</bcf:citekey>
+    <bcf:citekey order="6" intorder="1">RumHinWil:86</bcf:citekey>
+    <bcf:citekey order="7" intorder="1">RumHinWil:86</bcf:citekey>
+    <bcf:citekey order="8" intorder="1">PasGulChoBen:13</bcf:citekey>
+    <bcf:citekey order="9" intorder="1">Wer:90</bcf:citekey>
+    <bcf:citekey order="10" intorder="1">HocSch:97</bcf:citekey>
+    <bcf:citekey order="11" intorder="1">Bel:57</bcf:citekey>
+    <bcf:citekey order="12" intorder="1">ThrunPratt:98</bcf:citekey>
+    <bcf:citekey order="13" intorder="1">RafHilGleKanErnDor:21</bcf:citekey>
+    <bcf:citekey order="14" intorder="1">HenIslBacPinPreMeg:18</bcf:citekey>
+    <bcf:citekey order="15" intorder="1">EngIlySanTsi:20</bcf:citekey>
+    <bcf:citekey order="16" intorder="1">tensorflow2015-whitepaper</bcf:citekey>
+    <bcf:citekey order="16" intorder="2">wandb</bcf:citekey>
+    <bcf:citekey order="17" intorder="1">FinAbbLev:17</bcf:citekey>
   </bcf:section>
   <!-- SORTING TEMPLATES -->
   <bcf:sortingtemplate name="none">
