@@ -1,1 +1,0 @@
-{"loss_epoch0_task0": 0.0021197707392275333, "_timestamp": 1699043952.809753, "_runtime": 1190.96582198143, "_step": 17009, "reward_epoch0_task0": 0.0021197707392275333, "pool_indices_epoch0_task0": [0, 3, 4], "_wandb": {"runtime": 1193}}
