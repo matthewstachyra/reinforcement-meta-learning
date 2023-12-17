@@ -1,0 +1,12 @@
+wandb: Appending key for api.wandb.ai to your netrc file: /cluster/home/mstach01/.netrc
+2023-12-16 19:33:48.466177: I tensorflow/core/platform/cpu_feature_guard.cc:182] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: SSE4.1 SSE4.2 AVX AVX2 AVX512F AVX512_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+wandb: Currently logged in as: mattstachyra. Use `wandb login --relogin` to force relogin
+wandb: wandb version 0.16.1 is available!  To upgrade, please run:
+wandb:  $ pip install wandb --upgrade
+wandb: Tracking run with wandb version 0.15.12
+wandb: Run data is saved locally in /cluster/home/mstach01/code/reinforcement-meta-learning/src/continuous/wandb/run-20231216_193403-miajbj0d
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run td3-initial-test
+wandb: ⭐️ View project at https://wandb.ai/mattstachyra/reinforcement-meta-learning
+wandb: 🚀 View run at https://wandb.ai/mattstachyra/reinforcement-meta-learning/runs/miajbj0d

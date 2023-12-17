@@ -27,6 +27,7 @@ plt.rcParams.update({'figure.dpi': '75'})
 default_config = {
     'seed' : 20,
     'device' : 'cuda',
+    'wandb_run' : '',
     'n_runs' : 1,
     'epochs' : 1,
     'timesteps' : 1000,
@@ -52,6 +53,7 @@ default_config = {
 config = default_config
 
 parser = argparse.ArgumentParser(description="REML command line")
+parser.add_argument('--wandb_run', '-w', type=str, default=default_config['wandb_run'], help='Name of run in wandb', required=False)
 parser.add_argument('--device', '-d', type=str, default=default_config['device'], help='Device to run computations', required=False)
 parser.add_argument('--n_runs', '-n', type=int, default=default_config['n_runs'], help='Number of runs', required=False)
 parser.add_argument('--epochs', '-e', type=int, default=default_config['epochs'], help='Epochs', required=False)
@@ -68,7 +70,8 @@ config = { key : getattr(args, key, default_value) for key, default_value in def
 # initialize wandb
 wandb.init(
     project='reinforcement-meta-learning',
-    config=config
+    config=config,
+    name=config['wandb_run']
 )
 print(f'[INFO] Config={config}')
 
@@ -403,7 +406,7 @@ class REML:
                 wandb.log({ f'cumulative_loss_task{i}_per_epoch' : sum(self.env.loss_vals) })
 
                 # sine curves
-                self.generate_sine_curve(epoch=epoch, task=i, image=True, title='training_sine_curves', args={'label' : f'task_{i}'})
+                self.generate_sine_curve(epoch=epoch, task=i, image=True, title='training_sine_curves', args={'label' : f'task_{i}'}, new_figures=True)
                 
         return return_taskkey_epochcol, cumuloss_taskkey_epochcol
 
