@@ -1,3 +1,4 @@
+import os 
 import argparse
 import math
 import copy 
@@ -25,12 +26,12 @@ plt.rcParams.update({'figure.dpi': '75'})
 
 # configuration
 default_config = {
-    'seed' : 20,
+    'seed' : 41,
     'device' : 'cuda',
-    'wandb_run' : '',
+    'wandb_run:' : '',
     'n_runs' : 1,
     'epochs' : 1,
-    'timesteps' : 1000,
+    'timesteps' : 10000,
     'n_x' : 100,
     'n_tasks' : 2,
     'task_min_loss' : defaultdict(lambda: None),
@@ -40,18 +41,16 @@ default_config = {
     'n_hidden_layers_per_network' : 1,
     'n_layers_per_network' : 3,
     'n_nodes_per_layer' : 8,
-    'batch_size' : 64,
+    'pool_layer_type' : torch.nn.Linear,
+    'batch_size' : 100,
     'learning_rate' : 0.005,
-    'nudge_size' : 0.001,
-    'action_cache_size' : 5,
+    'nudge_size' : 0.01,
     'num_workers' : 0,
     'loss_fn' : torch.nn.MSELoss(),
     'sb3_model' : 'TD3',
     'sb3_policy' : 'MlpPolicy',
-    'log_dir' : 'wandb',
+    'log_dir' : 'rundata',
     }
-config = default_config
-
 parser = argparse.ArgumentParser(description="REML command line")
 parser.add_argument('--wandb_run', '-w', type=str, default=default_config['wandb_run'], help='Name of run in wandb', required=False)
 parser.add_argument('--device', '-d', type=str, default=default_config['device'], help='Device to run computations', required=False)
@@ -145,8 +144,6 @@ class InnerNetwork(gymnasium.Env, torch.nn.Module):
                 out_features: int=config['out_features'],
                 learning_rate: float=config['learning_rate'],
                 batch_size: int=config['batch_size'],
-                action_cache_size: float=config['action_cache_size'],
-                num_workers: int=config['num_workers'],
                 shuffle: bool=True,
                 ):
         super(InnerNetwork, self).__init__()
@@ -157,15 +154,13 @@ class InnerNetwork(gymnasium.Env, torch.nn.Module):
         self.out_features = out_features
         self.batch_size = batch_size
         self.shuffle = shuffle
-        self.action_cache_size = action_cache_size
-        self.num_workers = num_workers
         
         self.timestep = 0
         self.loss_vals = []
         self.reward_vals = []
         self.prev = defaultdict(lambda: None)
         self.curr = defaultdict(lambda: None)
-        self.data_loader = DataLoader(task, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)
+        self.data_loader = DataLoader(task, batch_size=batch_size, shuffle=shuffle)
         self.data_iter = iter(self.data_loader)
 
         # TODO is check whether need to min max scale the reward 
@@ -183,7 +178,7 @@ class InnerNetwork(gymnasium.Env, torch.nn.Module):
         for _ in range(1000):
             self.next_batch()
             self.opt.zero_grad()
-            self.forward(self.curr['x'])
+            self.forward()
             loss = self.loss_fn(self.curr['y'], self.curr['y_hat'])
             loss.backward()
             self.opt.step()
@@ -195,7 +190,7 @@ class InnerNetwork(gymnasium.Env, torch.nn.Module):
         # check initial loss with target
         self.next_batch()
         self.opt = torch.optim.Adam(self.layers.parameters(), lr=self.learning_rate)
-        self.forward(self.curr['x'])
+        self.forward()
         self.curr['loss'] = self.loss_fn(self.curr['y'], self.curr['y_hat'])
         self.curr['loss'].backward()
 
@@ -223,7 +218,7 @@ class InnerNetwork(gymnasium.Env, torch.nn.Module):
         self.next_batch()
         self.train()
         self.opt.zero_grad()
-        self.forward(self.curr['x'])
+        self.forward()
         self.curr['loss'] = self.loss_fn(self.curr['y'], self.curr['y_hat'])
         self.curr['loss'].backward()
 
@@ -261,7 +256,8 @@ class InnerNetwork(gymnasium.Env, torch.nn.Module):
                 self.curr['y'] = batch['y'].view(-1, 1)
                 self.curr['info'] = batch['info']
 
-    def forward(self, x) -> None:
+    def forward(self) -> None:
+        x = copy.deepcopy(self.curr['x'])
         for i in range(len(self.layers) - 1): 
             x = torch.nn.functional.relu(self.layers[i](x))
         self.curr['y_hat'] = self.layers[-1](x) 
@@ -279,7 +275,7 @@ class InnerNetwork(gymnasium.Env, torch.nn.Module):
         
         return torch.concat((
             # target 
-            params,
+            # params,
 
             # helpful info
             task_info,
@@ -294,7 +290,7 @@ class InnerNetwork(gymnasium.Env, torch.nn.Module):
         signal = - self.curr['loss']
 
         loss_fn = torch.nn.MSELoss()
-        # signal = - loss_fn(self.target_layer.weight.data, self.oracle_layer.weight.data)
+        signal = - loss_fn(self.target_layer.weight.data, self.oracle_layer.weight.data)
         high_magnitude = torch.any(torch.abs(self.target_layer.weight.data) > 3)
         if high_magnitude:
             signal -= 100
@@ -326,7 +322,7 @@ class InnerNetwork(gymnasium.Env, torch.nn.Module):
         for _ in range(1000):
             self.next_batch()
             self.opt.zero_grad()
-            self.forward(self.curr['x'])
+            self.forward()
             loss = self.loss_fn(self.curr['y'], self.curr['y_hat'])
             loss.backward()
             self.opt.step()
@@ -338,21 +334,65 @@ class InnerNetwork(gymnasium.Env, torch.nn.Module):
         # check initial loss with target
         self.next_batch()
         self.opt = torch.optim.Adam(self.layers.parameters(), lr=self.learning_rate)
-        self.forward(self.curr['x'])
+        self.forward()
         self.curr['loss'] = self.loss_fn(self.curr['y'], self.curr['y_hat'])
         self.curr['loss'].backward()
         return self.build_state(), None
+
+def plot_sine_curves(reml, 
+                     task, 
+                     env=None, 
+                     epoch=None, 
+                     image=False, 
+                     title=None, 
+                     args=defaultdict()) -> List:
+    # set env
+    env = reml.make_env(task)
+    reml.model.set_env(env)
+
+    # build network in env
+    obs, _ = env.reset()
+    while len(env.layers)!=config['n_layers_per_network']:
+        action, _ = reml.model.predict(obs)
+        obs, _, _, _, _ = env.step(action)
+
+    # run network to get yhats
+    xs, ys = task.data.clone(), task.targets.clone()
+    xs, ys = xs.view(len(xs), 1), ys.view(len(ys), 1)
+    env.curr['x'] = xs
+    env.forward()
+    yhats = env.curr['y_hat']
+
+    # plot sine curve
+    plt.figure()
+    plot_title = title if title!=None else f"sine_curve_epoch_{epoch}_task_{task.info['i']}" if epoch!=None and task!=None else 'sine_curve'
+    plot_path = f'{reml.log_dir}/{plot_title}.png'  
+    plt.plot(task.data, [yhat.detach().numpy() for yhat in yhats], **args)
+    plt.plot(task.data, task.targets, label='ground truth', linestyle='--')
+    plt.title(plot_title)
+    plt.legend()
+
+    # save png / wandb
+    if image:
+        plt.savefig(plot_path)
+        wandb.log({plot_title: wandb.Image(plot_path)})
+
+    # return if needed 
+    xs, yhats = task.data, [yhat.detach().numpy() for yhat in yhats]
+    return xs, yhats
+# TODO: plot_loss_vs_step
+# TODO: plot_few_shot
 
 class REML:
     def __init__(
         self,
         tasks: List[InnerNetworkTask],
+        run: int=1,
         model=config['sb3_model'],
         policy=config['sb3_policy'],
         epochs: int=config['epochs'],
         timesteps: int=config['timesteps'],
-        device: str=config['device'],
-        log_dir: str=f"./{config['log_dir']}/{config['sb3_model']}_{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}"
+        log_dir = f"{config['log_dir']}/{config['sb3_model']}_{datetime.datetime.now().strftime('%H-%M')}"
         ):
         self.tasks = tasks
         if config['sb3_model']=='TD3':
@@ -360,15 +400,15 @@ class REML:
         elif config['sb3_model']=='SAC':
             model = SAC
         dummy_env = self.make_env(tasks[0])
-        self.model = model(policy, dummy_env, tensorboard_log=log_dir)
+        self.run = run
+        self.model = model(policy, dummy_env)
         self.policy = policy
         self.epochs = epochs
         self.timesteps = timesteps
-        self.device = device # TODO is to check whether cuda is used as assumed
         self.log_dir = log_dir
+        os.makedirs(self.log_dir, exist_ok=True)
         self.return_epochs = defaultdict(lambda: [])
         self.cumuloss_epochs = defaultdict(lambda: [])
-
     
     def __str__(self) -> str:
         return f'REML(model={self.model}, policy={self.policy})'
@@ -384,13 +424,11 @@ class REML:
         # to calculate variance
         # e.g., task: [ n: [epoch: [100 values]] ] / array with n rows, epoch columns 
         # where cell @ [nth run][mth epoch] is cumulative loss/reward
-        return_taskkey_epochcol = defaultdict(lambda: [])
-        cumuloss_taskkey_epochcol = defaultdict(lambda: [])
         for epoch in range(self.epochs):
             print(f'[INFO] Epoch={epoch + 1}/{self.epochs}')
             for i, task in enumerate(self.tasks): 
-                self.task = task
                 print(f'[INFO] Task={i+1}/{len(self.tasks)}')
+                self.task = task
 
                 # each task gets its own network
                 self.env = self.make_env(self.task, epoch=epoch)
@@ -398,61 +436,14 @@ class REML:
                 self.model.learn(total_timesteps=self.timesteps)
 
                 # track reward and loss for plots
-                self.return_epochs[str(self.task.info['i'])].append(sum(self.env.reward_vals))
-                self.cumuloss_epochs[str(self.task.info['i'])].append(sum(self.env.loss_vals))
+                self.return_epochs[str(self.task.info['i'])].append(sum([reward.detach().numpy() for reward in self.env.reward_vals]))
+                self.cumuloss_epochs[str(self.task.info['i'])].append(sum([loss.detach().numpy() for loss in self.env.loss_vals]))
 
                 # log to wandb
-                wandb.log({ f'cumulative_reward_task{i}_per_epoch' : sum(self.env.reward_vals) })
-                wandb.log({ f'cumulative_loss_task{i}_per_epoch' : sum(self.env.loss_vals) })
+                wandb.log({ f'cumulative_reward_run{self.run}_task{i}_per_epoch' : sum(self.env.reward_vals) })
+                wandb.log({ f'cumulative_loss_run{self.run}_task{i}_per_epoch' : sum(self.env.loss_vals) })
 
-                # sine curves
-                self.generate_sine_curve(epoch=epoch, task=i, image=True, title='training_sine_curves', args={'label' : f'task_{i}'}, new_figures=True)
-                
-        return return_taskkey_epochcol, cumuloss_taskkey_epochcol
-
-    def generate_sine_curve(self, env=None, data=None, epoch=None, task=None, image=False, new_figures=False, title=None, args=defaultdict()) -> List:
-        # generates sine curve after 'env.layers' is full, with option to set env, limit to 
-        # subset of env data (for few shot evaluation), and to create png
-
-        # if env is not None:
-        #     self.env = env
-        #     self.model.set_env(env, force_reset=False)
-
-        # self.env.eval()
-        # obs, _ = self.env.reset()
-        
-        # while len(self.env.layers)!=config['n_layers_per_network']:
-        #     action, _ = self.model.predict(obs)
-        #     obs, _, _, _, _ = self.env.step(action)
-        
-        # if data is specified, wrap in new task
-        # if data is not specified, the iterator is used over set
-        if data is not None:
-            dataset = InnerNetworkTask(data=data[:, 0].clone(), targets=data[:, 1].clone(), info=self.task.info)
-        else: 
-            dataset = self.task
-
-        xs, ys = dataset.data.clone(), dataset.targets.clone()
-        xs, ys = xs.view(len(xs), 1), ys.view(len(ys), 1)
-        for i in range(len(self.env.layers) - 1): 
-            xs = torch.nn.functional.relu(self.env.layers[i](xs))
-        yhats = self.env.layers[-1](xs) 
-
-        if new_figures:
-            plt.figure()
-        plot_title = title if title!=None else f'sine_curve_epoch_{epoch}_task_{task}' if epoch!=None and task!=None else 'sine_curve'
-        plot_path = f'{self.log_dir}/{plot_title}.png'  
-        plt.plot(dataset.data, [yhat.detach().numpy() for yhat in yhats], **args)
-        plt.plot(dataset.data, dataset.targets, label='ground truth', linestyle='--')
-        plt.title(plot_title)
-        plt.legend()
-
-        if image:
-            plt.savefig(plot_path)
-            wandb.log({plot_title: wandb.Image(plot_path)})
-       
-        xs, yhats = dataset.data, [yhat.detach().numpy() for yhat in yhats]
-        return xs, yhats
+                plot_sine_curves(self, task=task, epoch=epoch, image=True, args={'label' : f'task_{i}'})
 
 if __name__ == "__main__":
 
@@ -460,14 +451,8 @@ if __name__ == "__main__":
     eval_task = random.choice(list(tasks))
     training_tasks = list(set(tasks) - {eval_task})
 
-    ########################################################################
-    # train 
-    ########################################################################
-
     return_task_runbyepoch = defaultdict(lambda: [])
     cumuloss_task_runbyepoch = defaultdict(lambda: [])
-    errors_task_runbyepoch = defaultdict(lambda: [])
-
     # e.g., return_task_runbyepoch
     #
     # task:      
@@ -477,10 +462,10 @@ if __name__ == "__main__":
     #        ...    [        ...        ]
     #       run n   [return, return, ...]]
 
-    for n in range(config['n_runs']):     
+    for n in range(1, config['n_runs']+1):     
 
         # run REML epoch times on all tasks
-        print(f"[INFO] n={n+1}")
+        print(f"[INFO] n={n}")
         path = f"{config['sb3_model']}_{datetime.datetime.now().strftime('%H-%M')}"
         reml = REML(tasks=training_tasks)
         reml.train()
@@ -490,13 +475,10 @@ if __name__ == "__main__":
         for task in tasks:
             return_task_runbyepoch[str(task.info['i'])].append(reml.return_epochs[str(task.info['i'])])
             cumuloss_task_runbyepoch[str(task.info['i'])].append(reml.cumuloss_epochs[str(task.info['i'])])
-            errors_task_runbyepoch[str(task.info['i'])].append(reml.errors_epochs[str(task.info['i'])])
         with open(f'returns_{path}', 'w') as json_file:
             json.dump(return_task_runbyepoch, json_file, indent=4)
         with open(f'cumuloss_{path}', 'w') as json_file:
             json.dump(cumuloss_task_runbyepoch, json_file, indent=4)
-        with open(f'errors_{path}', 'w') as json_file:
-            json.dump(errors_task_runbyepoch, json_file, indent=4)
         
         # evaluation plots
 
