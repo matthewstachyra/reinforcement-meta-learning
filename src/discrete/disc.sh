@@ -2,9 +2,10 @@
 #SBATCH -J RecurrentPPO
 #SBATCH --time=00-15:00:00                  # requested time (DD-HH:MM:SS)
 #SBATCH -p gpu 
+#SBATCH --gres=gpu:p100:1
 #SBATCH -N 1                                # 1 nodes
 #SBATCH -n 2                                # 2 tasks total (default 1 CPU core per task) = # of cores
-#SBATCH --mem=16g                             # requesting 2GB of RAM total
+#SBATCH --mem=32g                             # requesting 2GB of RAM total
 #SBATCH --output=RecurrentPPO.%j.%N.out #saving standard output to file, %j=JOBID, %N=NodeName
 #SBATCH --error=RecurrentPPO.%j.%N.err #saving standard error to file, %j=JOBID, %N=NodeName
 #SBATCH --mail-type=ALL                     # email
