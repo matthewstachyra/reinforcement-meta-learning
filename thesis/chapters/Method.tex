@@ -3,11 +3,183 @@
 \minitoc 
 
 \section{Preliminaries}
+We define a discrete-time and finite-horizon Markov decision process (MDP) as a 
+tuple $\mathcal{M} = \{ \mathcal{S}, \mathcal{A}, P_{a}, R_{a}, \gamma \}$, 
+where $\mathcal{S}$ is the set of states or \textit{state space}, 
+$\mathcal{A}=\set{\mathcal{A}_s | s \in S}$ is the set of actions or \textit{action space}, 
+$P$ is $P_a(s, s') = P(s_{t+1} = s' | s, a)$ or \textit{transition function}, 
+$R_a(s, s') = \set{r | r \in \R}$ is the reward upon transition from state s to 
+state s' or \textit{reward function}, 
+$\gamma \in [ 0, 1 ]$ is the discount factor. 
+The objective is to maximize the discounted expected return 
+$G= \mathbb{E}_{\tau} [ \sum^T_{t=0} \gamma^t r(s_t, a_t) ]$ where $\tau$ represents 
+the trajectory of state-action pairs $\tau = (s_0, a_0, r_0, s_1, \ldots)$.
+
 \section{Formulation}
+REML casts ``learning to learn'' as an RL problem. The task given to REML is to 
+learn regression algorithms, provided labeled regression datasets. 
+The learning process across the set of datasets is represented as a discrete-time 
+and finite-horizon MDP.
+\\\\
+Each regression algorithm begins as a different regression dataset.
+Each regression dataset is provided as a task to REML. 
+Such a task $\mathcal{T}$ is defined as a dataset comprising $N$ samples of 
+input-output pairs represented by $(x_i, y_i)$, where $x_i$ and $y_i$ are 
+real numbers. 
+Each task is randomly sampled from a distribution, and the set of all tasks is 
+represented as $\mathcal{D}$. 
+Specifically, each task $\mathcal{T}_i$ is defined as $\mathcal{T}_i = \{(x_{i1}, y_{i1}), (x_{i2}, y_{i2}), \ldots, (x_{iN}, y_{iN})\}$, where \( i = 1, 2, \ldots, M \), and \( M \) is the total number of tasks. 
+Additionally, for the purpose of evaluation, one task, denoted as \( \mathcal{E} \), 
+is chosen at random and left out. The set of such tasks then is 
+\[
+    \mathcal{D} = \{\mathcal{T}_1, \mathcal{T}_2, \ldots, \mathcal{T}_{M-1}\} \quad \text{and} \quad \mathcal{E} = \mathcal{T}_M
+\]
+Each task $\mathcal{T}$ is solved by approximation with a neural network $N$. 
+REML constructs each $N$ from neural network layers it sequences and trains from 
+a pre-initialized pool of layers $\mathcal{L}$.
+This layer pool $\mathcal{L}$ consists of $M$ input layers
+$\{ \mathcal{I}_1, \mathcal{I}_2, \ldots, \mathcal{I}_M \}$, $M$ 
+output layers $\{ \mathcal{O}_1, \mathcal{O}_2, \ldots, \mathcal{O}_M \}$, and 
+a pre-defined number of hidden layers that is $M$ times the depth of the composed
+network. 
+Each input layer $\mathcal{I}_i$ is associated with a specific task $\mathcal{T}_i $, 
+and each output layer $\mathcal{O}_i$ corresponds to the output of the network for 
+task $\mathcal{T}_i$. This layer pool $ \mathcal{L} $ can be represented as
+\[
+    \mathcal{L} = \{\mathcal{I}_1, \mathcal{I}_2, \ldots, \mathcal{I}_M, \mathcal{H}_1, \mathcal{H}_2, \ldots, \mathcal{H}_K, \mathcal{O}_1, \mathcal{O}_2, \ldots, \mathcal{O}_M\}
+\]
+where $\mathcal{H}_k$ represents the $k$-th hidden layer, and $K$ is the total 
+number of hidden layers in the network. 
+Each type of layer in $\mathcal{L}$ (i.e., $\mathcal{I}$, $\mathcal{H}$, and 
+$\mathcal{O}$) has the same dimension for all tasks $\mathcal{T} \in \mathcal{D}$. 
+Different sets of task $\mathcal{D}$ would have different dimensions for layer in
+the pool.
+\\\\
+Training consists of episodes of length $T$. The episode terminates when the 
+sequenced network $N$ reaches a pre-defined depth. At timestep $t=0$, $N$ is initialized
+with 2 layers, an input layer $\mathcal{I}$ and output layer $\mathcal{O}$. 
+Each timestep $t \in T$ REML selects a layer from $\mathcal{L}$ to sequence in $N$. 
+The state $s \in \mathcal{S}$ passed in each timestep is composed of: information 
+characterizing the task $\mathcal{T}$, 
+the magnitude of yhats (max absolute value), 
+the sequence of layers represented as indices within $\mathcal{L}$, 
+the latent space of $N$ (the feed-forward calculation of that state's $N$ up to and 
+not including the output layer). 
+The reward is the negative mean square error loss (MSE loss) signal. 
+At the end of an episode, layers are trained with the Adam optimizer \cite{KinBa:14}. A treatment of the negative mean 
+squared loss error (MSE loss) is the reward signal. 
+The trained layer copies are then updated in the layer pool $\mathcal{L}$. 
+The idea is that knowledge acquired by REML is held by these updated layers in 
+$\mathcal{L}$ with the policy serving as a map to rebuild a network it has made 
+perform for the task or a related task in the past.
+\\\\
 \section{Policy Representation}
+The policy is represented as either a recurrent policy with a Long short-term 
+memory (LSTM) network or a non-recurrent policy with a Multi-layer perceptron (MLP) 
+network. An MLP is a feed-forward ANN without cycles that has multiple hidden layers.
+An LSTM is an MLP with cycles or recurrent connections that allow the architecture 
+to use information from previous states observed in the network. These recurrent 
+connections are composed of selective memory cells which learn if and how to 
+incorporate past states' data. This mechanism enables the network to capture long-term
+dependencies in sequential data.
+\\\\
+An LSTM was chosen for the recurrent policy to capture the patterns in the sequence 
+of layers chosen by REML for a task. In this formulation, the sequence
+of layers chosen by REML are sequential data. The layers or paramemeters in 
+a neural network are not interchangeable without changing the approximation. 
+Therefore, the sequence of the selected layers by REML is as important as the layers
+that are chosen.
+
 \section{Policy Optimization}
-\section{Design}
+With the formulation as an RL problem, the policy can be optimized with RL algorithms. 
+REML uses the Proximal policy optimization (PPO) algorithm with both MLP and LSTM 
+policies, for reasons noted above \cite{SchuWolDha:17}. 
+PPO was selected as it works with a discrete action space and was designed with 
+training stability in mind. PPO clips updates calculated from a rollout of batch
+data such that the new policy is never too different from the old policy after a step. 
+Stability was a priority given the policy would be trained across multiple different 
+tasks and it would be possible for the policy to anchor to a particular task in a 
+particular epoch, skewing the performance to that task. 
+
+\section{Learning Signal}
+The learning signal or reward function $R_{a}$ is the negative MSE loss.
+The MSE loss captures "how good" the last few actions REML made are by assessing 
+the performance of $N$ on task $\mathcal{T}$. It is a highly interpretable metric with
+direct correlation to network performance as it is the measure of network performance. The loss is made negative because the objective of the 
+``outer'' network (REML) is to maximize a reward though the objective
+of the ``inner'' network $N$ (sequenced by REML) is to minimize a loss. 
+\\\\
+The negative MSE loss was min-max scaled after it was observed to lead to
+unstable training at times. Across epochs, different tasks would dip in their 
+performance after it seemed REML converged for that task.
+In addition, this performance dip coincided with a drift in output values across tasks.
+The networks would anchor to one task (dataset) within an epoch and the other networks 
+would output values in magnitude closer to the much smaller or larger target values 
+for the anchored task.
+\\\\
+Further testing showed that the Adam optimizer was responsible for a 
+disproportionate degree of task performance in terms of MSE loss. MSE loss data per 
+step per task per epoch showed that REML would choose different layers in different 
+sequences and $N$ would acheive the same, or in some cases better, MSE loss 
+for the batch. 
+Though the sequenced $N$  or ``inner network'' performed well, the 
+``outer network'' REML wasn't learning effectively because it was choosing different
+layers with the same results. 
+\\\\
+By design, the Adam optimizer was to train the layers selected by REML for $N$; 
+however, the intention was a balance in what Adam optimized in a sequenced network 
+and in the network sequenced by REML. REML was to learn from Adam in terms of what 
+sequence of layers (what sequence of actions) produced the highest return for the 
+task. This finding was addressed by introducing a discount factor (to credit poor 
+initial layers by REML and discredit Adam's training of poor layers) and to reduce 
+the amount of gradient steps taken by the Adam optimizer in an episode (to credit 
+the sequence of actions more).
+\\\\
+The discount factor scales an episode's return by "how bad" the 
+initial 2 layers (the input layer and the output layer) are in $N$. "Bad" here is 
+defined in terms of the loss after the first 2 actions relative to the max 
+loss observed for the task. 
+As $N$'s loss approaches the max observed loss, the scale factor is smaller and 
+the return is smaller.
+The effect is that the return would be lower for an episode with the same final 
+loss (the same performance $N$) if $N$ contains "bad" layers. A lower return in this 
+case would reduce the influence of Adam on the learning signal to REML by 
+crediting those actions that lead to high initial loss, and making REML less likely 
+to choose them again. The reward is shaped to instruct REML to choose layers 
+in a sequence that has the lowest MSE loss.
+\\\\
+The purpose of the discount 
+factor was to assign more credit to earlier actions (i.e., the first couple layers 
+sequenced by REML) and to discredit high reward values that began as very high loss
+values tempered by the Adam optimizer being very effective.
+
 \section{Algorithm}
+\begin{algorithm}
+\caption{Reinforcement Meta-learning (REML)}\label{alg:cap}
+\begin{algorithmic}
+\State \textbf{Input:} $\alpha$, $\beta$: step-size hyperparameters
+\State \textbf{Input:} $T$: set of tasks $t$ 
+\State \textbf{Input:} $f_{\theta_{super}}$: RL agent parameterized $\theta_{super}$
+\State \textbf{Input:} $L$: set of layers $l$
+\State Randomly initialize $\theta_{super}$
+\State Randomly initialize all $l \in L$ with $\theta_{sub}$
+\For{$t_i \in T$} % this constitutes one epoch of training
+\State Sample $d$ from $\mathcal{D} = \{\mathbf{x}^{(j)}, \mathbf{y}^{(j)}\}$ for $t_i$
+\State Pass $d$ through an initial layer in $L$ to get initial state $s_k$ 
+\While{not done} % capped by the number of training steps
+\State Get next layer $l_k \in L$ via $f_{\theta_{super}}(s_k)$
+\State Expand $\theta_{sub}$ with $l_k$'s $\theta$
+\State Evaluate $\mathcal{L}_{\theta_{super}}$ for chosen $f_{super}$ 
+\State Evaluate $\mathcal{L}_{\theta_{sub}}$ for chosen $f_{sub}$ 
+\State $\theta_{super} \leftarrow \theta_{super} + \alpha \nabla \mathcal{L}_{\theta_{super}}$ 
+\State $\theta_{sub} \leftarrow \theta_{sub} + \beta \nabla \mathcal{L}_{\theta_{sub}}$ 
+\State Sample $d$ from $\mathcal{D} = \{\mathbf{x}^{(j)}, \mathbf{y}^{(j)}\}$ for $t_i$
+\State Update state $s_k$ via $f_{\theta_{sub}} (d)$
+\EndWhile
+\EndFor
+\end{algorithmic}
+\end{algorithm}
+
 \section{Implementation}
 REML was implemented using Pytorch for the layers and functions comprising the 
 inner networks and Stablebaselines3 with its open-source implementations of deep RL 

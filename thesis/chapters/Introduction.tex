@@ -1,0 +1,46 @@
+A deep learning model of a target function is always constrained by available data 
+in the target domain. Few data examples limits the ability of the model to 
+represent the target function at unknown points. Trying to learn under this 
+constraint is known as few shot learning. One paradigm applied to manage this 
+constraint is meta-learning or ``learning to learn''. This thesis contributes a 
+new meta-learning algorithm. We are using the definition of meta-learning as 
+proposed initially by Thrun et al in 1998: an algorithm is learning to learn if 
+its performance at each task (where there is more than 1 task, more than 1 
+performance measure, and more than 1 training experience) is expected to improve 
+with the number of tasks and training experiences on these tasks. The new 
+meta-learning algorithm is Reinforcement Meta-Learning (REML), which casts learning 
+to learn as a parameterized markov decision process.
+\\\\
+REML is composed of a supervisory agent in a system with the models it generates 
+for provided tasks in a domain. The supervisory agent is implemented with 
+reinforcement learning with a parameterized action space, and the  models are 
+implemented as deep neural networks in the environment of the meta-learner agent. 
+The supervisory agent composes and trains the models layer by layer for each task. 
+In this way the reinforcement learning meta-learner is responsible for both 
+hyperparameters and parameters. 
+\\\\
+This is to my knowledge the first work to use reinforcement learning as the 
+meta-learner in a model agnostic manner akin to MAML (model agnostic meta-learning) 
+proposed by Finn et al 2018.  Other works at the intersection of reinforcement 
+learning and meta-learning include RL-driven hyperparameter search (i.e., neural 
+architecture search) and meta-reinforcement learning, where both the inner and outer 
+loops are RL agents. The performance of REML will be evaluated for regression, 
+classification, and reinforcement learning tasks on the same benchmarks as the MAML 
+(Model agnostic meta-learning) paper by Finn et al 2018. As time allows, or as 
+future work, I will investigate certain convenient properties inherent to this 
+design. One of these may be robustness to learning on unrelated tasks, relative to 
+offline trained tasks. I hypothesize that because layers in REML are composed 
+individually, they have a more expressive quality in their availability to be 
+sequenced in different combinations. This is as opposed to a single initial set of 
+policy parameters adapted for each task, as is in MAML.
+\\\\
+The research questions this work seeks to answer are: (1) can REML enable fast 
+learning for new tasks?, (2) can REML be model agnostic and perform for 
+regression, classification, and reinforcement learning?, and (3) is REML robust to 
+unrelated tasks at meta test time?
+\\\\
+To answer these research questions, preliminary questions answered are: (1) how to 
+design a neural network using reinforcement learning?, (2) how to train a neural 
+network using reinforcement learning?, (3) how to transfer learning across tasks 
+using reinforcement learning?, and (4) how to enable meta-learning with 
+reinforcement learning as the meta-learner?

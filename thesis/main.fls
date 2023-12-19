@@ -1,6 +1,6 @@
-PWD c:\Users\stach\Documents\masters-thesis\thesis
+PWD c:\Users\stach\Documents\reinforcement-meta-learning\thesis
 INPUT C:\Users\stach\AppData\Local\MiKTeX\miktex\data\le\pdftex\pdflatex.fmt
-INPUT c:\Users\stach\Documents\masters-thesis\thesis\main.tex
+INPUT c:\Users\stach\Documents\reinforcement-meta-learning\thesis\main.tex
 OUTPUT main.log
 INPUT C:\Users\stach\AppData\Local\Programs\MiKTeX\tex\latex\base\report.cls
 INPUT C:\Users\stach\AppData\Local\Programs\MiKTeX\tex\latex\base\report.cls
@@ -558,6 +558,14 @@ INPUT C:\Users\stach\AppData\Local\Programs\MiKTeX\tex\latex\tools\calc.sty
 INPUT C:\Users\stach\AppData\Local\Programs\MiKTeX\tex\latex\tools\calc.sty
 INPUT C:\Users\stach\AppData\Local\Programs\MiKTeX\tex\latex\mathtools\mhsetup.sty
 INPUT C:\Users\stach\AppData\Local\Programs\MiKTeX\tex\latex\mathtools\mhsetup.sty
+INPUT C:\Users\stach\AppData\Local\Programs\MiKTeX\tex\latex\algorithms\algorithm.sty
+INPUT C:\Users\stach\AppData\Local\Programs\MiKTeX\tex\latex\algorithms\algorithm.sty
+INPUT C:\Users\stach\AppData\Local\Programs\MiKTeX\tex\latex\float\float.sty
+INPUT C:\Users\stach\AppData\Local\Programs\MiKTeX\tex\latex\float\float.sty
+INPUT C:\Users\stach\AppData\Local\Programs\MiKTeX\tex\latex\algorithmicx\algpseudocode.sty
+INPUT C:\Users\stach\AppData\Local\Programs\MiKTeX\tex\latex\algorithmicx\algpseudocode.sty
+INPUT C:\Users\stach\AppData\Local\Programs\MiKTeX\tex\latex\algorithmicx\algorithmicx.sty
+INPUT C:\Users\stach\AppData\Local\Programs\MiKTeX\tex\latex\algorithmicx\algorithmicx.sty
 INPUT .\main.aux
 INPUT .\main.aux
 INPUT main.aux
@@ -649,7 +657,6 @@ INPUT C:\Users\stach\AppData\Local\Programs\MiKTeX\fonts\tfm\public\cm\cmbx12.tf
 INPUT C:\Users\stach\AppData\Local\Programs\MiKTeX\fonts\tfm\public\cm\cmbx8.tfm
 INPUT C:\Users\stach\AppData\Local\Programs\MiKTeX\fonts\tfm\public\cm\cmbx6.tfm
 INPUT C:\Users\stach\AppData\Local\Programs\MiKTeX\fonts\tfm\jknappen\ec\tcrm1200.tfm
-INPUT C:\Users\stach\AppData\Local\Programs\MiKTeX\fonts\enc\dvips\cm-super\cm-super-ts1.enc
 INPUT .\chapters\Method.tex
 INPUT .\chapters\Method.tex
 INPUT .\chapters\Method.tex
@@ -676,6 +683,8 @@ INPUT .\main.mtc
 INPUT main.aux
 INPUT main.run.xml
 OUTPUT main.run.xml
+INPUT C:\Users\stach\AppData\Local\MiKTeX\fonts\pk\ljfour\jknappen\ec\dpi600\tcrm1200.pk
+INPUT C:\Users\stach\AppData\Local\MiKTeX\fonts\pk\ljfour\jknappen\ec\dpi600\tcrm1200.pk
 INPUT C:\Users\stach\AppData\Local\Programs\MiKTeX\fonts\type1\public\amsfonts\cm\cmbx12.pfb
 INPUT C:\Users\stach\AppData\Local\Programs\MiKTeX\fonts\type1\public\amsfonts\cm\cmbx12.pfb
 INPUT C:\Users\stach\AppData\Local\Programs\MiKTeX\fonts\type1\public\amsfonts\cm\cmbx8.pfb
@@ -708,5 +717,3 @@ INPUT C:\Users\stach\AppData\Local\Programs\MiKTeX\fonts\type1\public\amsfonts\c
 INPUT C:\Users\stach\AppData\Local\Programs\MiKTeX\fonts\type1\public\amsfonts\cm\cmtt12.pfb
 INPUT C:\Users\stach\AppData\Local\Programs\MiKTeX\fonts\type1\public\amsfonts\symbols\msbm10.pfb
 INPUT C:\Users\stach\AppData\Local\Programs\MiKTeX\fonts\type1\public\amsfonts\symbols\msbm10.pfb
-INPUT C:\Users\stach\AppData\Local\Programs\MiKTeX\fonts\type1\public\cm-super\sfrm1200.pfb
-INPUT C:\Users\stach\AppData\Local\Programs\MiKTeX\fonts\type1\public\cm-super\sfrm1200.pfb

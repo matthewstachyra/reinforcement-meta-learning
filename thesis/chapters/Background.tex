@@ -355,7 +355,7 @@ $s \in S$ where it can take an action $a \in A_s$ and recieve the reward signal 
 as it transitions from state $s=s_t$ to state $s'=s_{t+1}$. This sequence would look
 something like
 \begin{equation}
-    S_0, A_0, R_1, S_1, A_1, R_2, \ldots
+    S_0, A_0, R_1, S_1, A_1, R_2, \ldots 
 \end{equation}
 The state is the information the agent has about the environment. It is based on this
 state that the agent takes an action and enters a new state -- and this
@@ -397,7 +397,7 @@ $t \in T, \quad T \subseteq \R$. The reward value $r_t \in \R$ is rewarded by th
 environment to the agent every timestep.
 This accummulated value is called the \textit{return}. 
 \begin{equation}
-    G_t = R_{t+1} + R_{t+2} + R_{t+3} + \ldots + R_{T}
+    G_t = R_{t+1} + R_{t+2} + R_{t+3} + \ldots + R_{T} 
 \end{equation}
 This equation for the return works if the time horizon of the agent's experience is finite.
 This is the case when experience have a termination condition that concludes the agent's 
