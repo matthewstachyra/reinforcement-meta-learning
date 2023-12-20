@@ -1,0 +1,50 @@
+[INFO] Config={'seed': 834, 'device': 'cuda', 'wandb_run': 'test', 'n_runs': 2, 'epochs': 2, 'timesteps': 500, 'n_x': 100, 'n_tasks': 3, 'task_min_loss': defaultdict(<function <lambda> at 0x2ad029001440>, {}), 'task_max_loss': defaultdict(<function <lambda> at 0x2ad064c4dda0>, {}), 'in_features': 1, 'out_features': 1, 'n_pool_hidden_layers': 6, 'n_hidden_layers_per_network': 3, 'n_layers_per_network': 5, 'n_nodes_per_layer': 40, 'pool_layer_type': <class 'torch.nn.modules.linear.Linear'>, 'batch_size': 32, 'learning_rate': 0.005, 'discount_factor': 0.95, 'loss_fn': MSELoss(), 'sb3_model': 'RecurrentPPO', 'sb3_policy': 'MlpLstmPolicy', 'data_dir': 'slurm'}
+[INFO] Tasks created.
+[INFO] n=1
+[INFO] Calculating min and max loss for task 1.
+[INFO] Calculating min and max loss for task 2.
+[INFO] Epoch=1/2
+[INFO] Task=1/2
+[INFO] Task=2/2
+[INFO] Epoch=2/2
+[INFO] Task=1/2
+[INFO] Task=2/2
+[INFO] n=2
+[INFO] Calculating min and max loss for task 1.
+[INFO] Calculating min and max loss for task 2.
+[INFO] Epoch=1/2
+[INFO] Task=1/2
+[INFO] Task=2/2
+[INFO] Epoch=2/2
+[INFO] Task=1/2
+[INFO] Task=2/2
+task=0
+array=[[-2.         -1.95351355]
+ [-2.         -1.00567736]]
+task_mean={0: [-2.0, -1.479595459299162]}
+task_std={0: [0.0, 0.47391809499822557]}
+task=2
+array=[[-2.          0.        ]
+ [-1.18510369 -2.0600984 ]]
+task_mean={0: [-2.0, -1.479595459299162], 2: [-1.5925518460571766, -1.0300491992384195]}
+task_std={0: [0.0, 0.47391809499822557], 2: [0.4074481539428234, 1.0300491992384195]}
+task=0
+array=[[0.01906115 1.49785741]
+ [0.03804749 1.08226192]]
+task_mean={0: [0.02855431940406561, 1.2900596670806408]}
+task_std={0: [0.009493169374763966, 0.20779774710536003]}
+task=2
+array=[[37.59345436  0.        ]
+ [55.07934952 86.50692749]]
+task_mean={0: [0.02855431940406561, 1.2900596670806408], 2: [46.33640193939209, 43.25346374511719]}
+task_std={0: [0.009493169374763966, 0.20779774710536003], 2: [8.742947578430176, 43.25346374511719]}
+task=0
+array=[[268 232]
+ [259 213]]
+task_mean={0: [263.5, 222.5]}
+task_std={0: [4.5, 9.5]}
+task=2
+array=[[270 186]
+ [244 197]]
+task_mean={0: [263.5, 222.5], 2: [257.0, 191.5]}
+task_std={0: [4.5, 9.5], 2: [13.0, 5.5]}

@@ -66,6 +66,7 @@ parser.add_argument('--sb3_model',  type=str, default=default_config['sb3_model'
 parser.add_argument('--sb3_policy', type=str, default=default_config['sb3_policy'], help='SB3 policy to use', required=False)
 parser.add_argument('--data_dir', '-o', type=str, default=default_config['data_dir'], help='Directory to save tensorboard logs', required=False)
 parser.add_argument('--n_layers_per_network', type=int, default=default_config['n_layers_per_network'], help='Number of layers per network', required=False)
+parser.add_argument('--wandb_run', type=str, default=default_config['wandb_run'], help='Name of run on wandb', required=False)
 args = parser.parse_args()
 config = { key : getattr(args, key, default_value) for key, default_value in default_config.items() }
 
