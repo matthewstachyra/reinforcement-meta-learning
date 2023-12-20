@@ -795,63 +795,63 @@ def plot_few_shot_learning(reml,
 
 if __name__ == "__main__":
 
-tasks = [InnerNetworkTask(data=tasks_data[i], targets=tasks_targets[i], info=tasks_info[i]) for i in range(config['n_tasks'])]
-eval_task = random.choice(list(tasks))
-training_tasks = list(set(tasks) - {eval_task})
+    # create tasks
+    tasks = [InnerNetworkTask(data=tasks_data[i], targets=tasks_targets[i], info=tasks_info[i]) for i in range(config['n_tasks'])]
+    eval_task = random.choice(list(tasks))
+    training_tasks = list(set(tasks) - {eval_task})
 
-cumureward_task_runbyepoch = defaultdict(lambda: [])
-cumuloss_task_runbyepoch = defaultdict(lambda: [])
-errors_task_runbyepoch = defaultdict(lambda: [])
-
-# n models saved, n pools saved, and 1 data dict saved
-# e.g.,
-# PPO_1218_10-02_model_n -> run n model
-# PPO_1218_10-02_layers_n -> run n layers
-# data/PPO_1218_10-02 -> all runs data
-
-name = f"{config['sb3_model']}_{datetime.datetime.now().strftime('%m%d_%H-%M')}"
-data_path = f"{config['data_dir']}/{name}"
-os.makedirs(data_path, exist_ok=True)
-for run in range(1, config['n_runs']+1):     
-    print(f"[INFO] n={run}")
-
-    randomize_seed()
-
-    # train
-    pool = LayerPool()
-    reml = REML(tasks=training_tasks, layer_pool=pool, run=run, path=data_path)
-    reml.train()
+    # n models saved, n pools saved, and 1 data dict saved
+    # e.g.,
+    # PPO_1218_10-02_model_n -> run n model
+    # PPO_1218_10-02_layers_n -> run n layers
+    # data/PPO_1218_10-02 -> all runs data
+    cumureward_task_runbyepoch = defaultdict(lambda: [])
+    cumuloss_task_runbyepoch = defaultdict(lambda: [])
+    errors_task_runbyepoch = defaultdict(lambda: [])
+    name = f"{config['sb3_model']}_{datetime.datetime.now().strftime('%m%d_%H-%M')}"
+    data_path = f"{config['data_dir']}/{name}"
+    os.makedirs(data_path, exist_ok=True)
 
     # save tasks
-    torch.save(training_tasks, f'{name}_trainingtasks_{run}.pth')
-    torch.save(eval_task, f'{name}_evaltask_{run}.pth')
+    torch.save(training_tasks, f'{name}_trainingtasks.pth')
+    torch.save(eval_task, f'{name}_evaltask.pth')
 
-    # save model
-    model_path = f"{data_path.split('/', 1)[-1]}_model_{run}"
-    reml.model.save(model_path)
+    for run in range(1, config['n_runs']+1):     
+        print(f"[INFO] n={run}")
 
-    # save pool
-    layers = copy.deepcopy(pool.layers)
-    layers.insert(0, pool.initial_input_layer)
-    layers.append(pool.initial_output_layer)
-    torch.save(layers, f'{name}_layers_{run}.pth')
+        randomize_seed()
 
-    # save run data
-    for task in tasks:
-        cumureward_task_runbyepoch[str(task.info['i'])].append(reml.cumureward_epochs[str(task.info['i'])])
-        cumuloss_task_runbyepoch[str(task.info['i'])].append(reml.cumuloss_epochs[str(task.info['i'])])
-        errors_task_runbyepoch[str(task.info['i'])].append(reml.errors_epochs[str(task.info['i'])])
-    with open(f'{data_path}/{name}_cumureward', 'w') as json_file:
-        json.dump(cumureward_task_runbyepoch, json_file, indent=4)
-    with open(f'{data_path}/{name}_cumuloss', 'w') as json_file:
-        json.dump(cumuloss_task_runbyepoch, json_file, indent=4)
-    with open(f'{data_path}/{name}_errors', 'w') as json_file:
-        json.dump(errors_task_runbyepoch, json_file, indent=4)
+        # train
+        pool = LayerPool()
+        reml = REML(tasks=training_tasks, layer_pool=pool, run=run, path=data_path)
+        reml.train()
+
+        # save model
+        model_path = f"{data_path.split('/', 1)[-1]}_model_{run}"
+        reml.model.save(model_path)
+
+        # save pool
+        layers = copy.deepcopy(pool.layers)
+        layers.insert(0, pool.initial_input_layer)
+        layers.append(pool.initial_output_layer)
+        torch.save(layers, f'{name}_layers_{run}.pth')
+
+        # save return, loss, and error data
+        for task in tasks:
+            cumureward_task_runbyepoch[str(task.info['i'])].append(reml.cumureward_epochs[str(task.info['i'])])
+            cumuloss_task_runbyepoch[str(task.info['i'])].append(reml.cumuloss_epochs[str(task.info['i'])])
+            errors_task_runbyepoch[str(task.info['i'])].append(reml.errors_epochs[str(task.info['i'])])
+        with open(f'{data_path}/{name}_cumureward', 'w') as json_file:
+            json.dump(cumureward_task_runbyepoch, json_file, indent=4)
+        with open(f'{data_path}/{name}_cumuloss', 'w') as json_file:
+            json.dump(cumuloss_task_runbyepoch, json_file, indent=4)
+        with open(f'{data_path}/{name}_errors', 'w') as json_file:
+            json.dump(errors_task_runbyepoch, json_file, indent=4)
 
 
     # load pool, model, run data
-    training_tasks = torch.load(f'{name}_trainingtasks_{i}.pth')
-    eval_task = torch.load(f'{name}_evaltask_{i}.pth')
+    training_tasks = torch.load(f'{name}_trainingtasks.pth')
+    eval_task = torch.load(f'{name}_evaltask.pth')
     path = os.path.join(os.getcwd(), data_path, name)
     cumureward = json.load(open(f"{path}_cumureward", 'r'))
     cumuloss = json.load(open(f"{path}_cumuloss", 'r'))
