@@ -32,11 +32,11 @@ default_config = {
     'seed' : 41,
     'device' : 'cuda',
     'wandb_run' : '',
-    'n_runs' : 5,
-    'epochs' : 5,
+    'n_runs' : 2,
+    'epochs' : 3,
     'timesteps' : 100,
     'n_x' : 100,
-    'n_tasks' : 6,
+    'n_tasks' : 2,
     'task_min_loss' : defaultdict(lambda: float('inf')),
     'task_max_loss' : defaultdict(lambda: -float('inf')),
     'in_features' : 1,
@@ -46,7 +46,7 @@ default_config = {
     'n_layers_per_network' : 5,
     'n_nodes_per_layer' : 40,
     'pool_layer_type' : torch.nn.Linear,
-    'batch_size' : 64,
+    'batch_size' : 32,
     'learning_rate' : 0.005,
     'discount_factor' : 0.95,
     'loss_fn' : torch.nn.MSELoss(),
@@ -68,6 +68,15 @@ parser.add_argument('--data_dir', '-o', type=str, default=default_config['data_d
 parser.add_argument('--n_layers_per_network', type=int, default=default_config['n_layers_per_network'], help='Number of layers per network', required=False)
 args = parser.parse_args()
 config = { key : getattr(args, key, default_value) for key, default_value in default_config.items() }
+
+# set seed
+def randomize_seed():
+    new_seed = random.randint(1, 1000)
+    config['seed'] = new_seed
+    random.seed(config['seed'])
+    np.random.seed(config['seed'])
+    torch.manual_seed(config['seed'])
+randomize_seed()
 
 # initialize wandb
 wandb.init(
@@ -423,13 +432,13 @@ class REML:
             model = PPO
         elif config['sb3_model']=='RecurrentPPO':
             model = RecurrentPPO
-        dummy_env = self.make_env(tasks[0], layer_pool) #TODO: why tasks[0]?
+        dummy_env = self.make_env(tasks[0], layer_pool) 
         self.run = run
-        self.model = model(policy, dummy_env)
+        self.model = model(policy, dummy_env, seed=config['seed'])
         self.policy = policy
         self.epochs = epochs
         self.timesteps = timesteps
-        self.return_epochs = defaultdict(lambda: [])
+        self.cumureward_epochs = defaultdict(lambda: [])
         self.cumuloss_epochs = defaultdict(lambda: [])
         self.errors_epochs = defaultdict(lambda: [])
 
@@ -480,7 +489,7 @@ class REML:
                 config['task_max_loss'][self.task.info['i']] = max(local_max_loss, config['task_max_loss'][self.task.info['i']])
 
                 # track reward and loss for plots
-                self.return_epochs[str(self.task.info['i'])].append(sum(self.env.reward_vals))
+                self.cumureward_epochs[str(self.task.info['i'])].append(sum(self.env.reward_vals))
                 self.cumuloss_epochs[str(self.task.info['i'])].append(sum(self.env.loss_vals))
                 self.errors_epochs[str(self.task.info['i'])].append(self.env.errors)
 
@@ -490,12 +499,8 @@ class REML:
                 wandb.log({ f'cumulative_loss_run{self.run}_task{i}_per_epoch' : sum(self.env.loss_vals) })
                 wandb.log({ f'pool_indices_run{self.run}_task{i}_per_epoch' : wandb.Histogram(torch.tensor(self.env.layers_pool_indices))})
 
-                plot_sine_curves(self, tasks=[self.task], path=self.path, run=self.run, epoch=epoch, image=True)
-
-# plotting functions require loading reml parameters to new reml object
-# e.g.,
-#   reml = REML(layer_pool=pool, tasks=tasks)
-#   reml.model.load('RecurrentPPO_12-37')
+                # NOTE running this during training consumes a lot of memory
+                # plot_sine_curves(self, tasks=[self.task], path=self.path, run=self.run, epoch=epoch, image=True)
 
 class RegressionModel(torch.nn.Module):
     def __init__(self):
@@ -512,60 +517,100 @@ class RegressionModel(torch.nn.Module):
         x = self.layers[-1](x)
         return x
 
-def plot_loss_vs_step_curves(reml,
-                      tasks,
-                      path,
-                      steps=100,
-                      image=False,
-                      ) -> Tuple[dict]:
+def plot_loss_vs_step_curves(remls,
+                             tasks,
+                             path,
+                             steps=100,
+                             image=False,) -> Tuple[dict]:
 
+    meta_task_mean = defaultdict(lambda: [])
+    meta_task_std = defaultdict(lambda: [])
+    scratch_task_mean = defaultdict(lambda: [])
+    scratch_task_std = defaultdict(lambda: [])
     meta_task_lossbystep = defaultdict(lambda: [])
     scratch_task_lossbystep = defaultdict(lambda: [])
     for task in tasks: 
-        # get loss per step from meta-learned model
-        env = reml.make_env(task)
-        reml.model.set_env(env, force_reset=False)
-        obs, _ = env.reset()
-        while len(env.layers) < config['n_layers_per_network']:
-            action, _ = reml.model.predict(obs)
-            obs, _, done, _, _ = env.step(action)
-            if done: # network built
-                layers = copy.deepcopy(env.layers)
-                network = RegressionModel()
-                network.layers = layers
-                optimizer = torch.optim.Adam(network.parameters(), lr=config['learning_rate'])
-                criterion = torch.nn.MSELoss()
-                for _ in range(steps):
-                    optimizer.zero_grad() 
-                    outputs = network(task.data.view(-1, 1))
-                    loss = criterion(outputs, task.targets.view(-1,1))
-                    loss.backward()
-                    optimizer.step()
-                    meta_task_lossbystep[task].append(loss)
+        for reml in remls:
 
-        # get loss per step from model trained from scratch 
-        network = RegressionModel()
-        criterion = torch.nn.MSELoss()
-        optimizer = torch.optim.Adam(network.parameters(), lr=config['learning_rate'])
-        network.train()
-        for _ in range(steps):
-            optimizer.zero_grad() 
-            outputs = network(task.data.view(-1, 1))
-            loss = criterion(outputs, task.targets.view(-1,1))
-            loss.backward()
-            optimizer.step()
-            scratch_task_lossbystep[task].append(loss)
+            # meta trained network loss
+            env = reml.make_env(task)
+            reml.model.set_env(env, force_reset=False)
+            obs, _ = env.reset()
+            loss_for_this_reml = []
+            while len(env.layers) < config['n_layers_per_network']:
+                action, _ = reml.model.predict(obs)
+                obs, _, done, _, _ = env.step(action)
+                if done: # network built
+                    layers = copy.deepcopy(env.layers)
+                    network = RegressionModel()
+                    network.layers = layers
+                    optimizer = torch.optim.Adam(network.parameters(), lr=config['learning_rate'])
+                    criterion = torch.nn.MSELoss()
+                    for _ in range(steps):
+                        optimizer.zero_grad() 
+                        outputs = network(task.data.view(-1, 1))
+                        loss = criterion(outputs, task.targets.view(-1,1))
+                        loss.backward()
+                        optimizer.step()
+                        loss_for_this_reml.append(loss.detach().numpy())
+        
+            # add list of losses
+            meta_task_lossbystep[task].append(loss_for_this_reml)
 
-        # plot loss vs step curve for each task
+            # scratch trained network loss
+            network = RegressionModel()
+            criterion = torch.nn.MSELoss()
+            optimizer = torch.optim.Adam(network.parameters(), lr=config['learning_rate'])
+            network.train()
+            loss_for_this_scratch = []
+            for _ in range(steps):
+                optimizer.zero_grad() 
+                outputs = network(task.data.view(-1, 1))
+                loss = criterion(outputs, task.targets.view(-1,1))
+                loss.backward()
+                optimizer.step()
+                loss_for_this_scratch.append(loss.detach().numpy())
+
+            # add list of losses     
+            scratch_task_lossbystep[task].append(loss_for_this_scratch)
+
+        # meta trained network mean, std
+        array = np.array(meta_task_lossbystep[task])
+        meta_task_mean[task] = [np.mean(array[:, epoch]) for epoch in range(array.shape[1])]
+        meta_task_std[task] = [np.std(array[:, epoch]) for epoch in range(array.shape[1])] 
+
+        # scratch trained network mean, std
+        array = np.array(scratch_task_lossbystep[task])
+        scratch_task_mean[task] = [np.mean(array[:, epoch]) for epoch in range(array.shape[1])]
+        scratch_task_std[task] = [np.std(array[:, epoch]) for epoch in range(array.shape[1])] 
+
+        # # plot loss vs step curve
+        # plt.figure()
+        # meta_label = "Meta-trained network"
+        # scratch_label = "Baseline network from scratch"
+        # plt.plot(range(steps), [loss.detach().numpy() for loss in meta_task_lossbystep[task]], label=meta_label)
+        # plt.plot(range(steps), [loss.detach().numpy() for loss in scratch_task_lossbystep[task]], label=scratch_label)
+
+        # mean, std over runs
         plt.figure()
-        plot_title = f"Loss versus step (task={task.info['i']+1})"
+        plot_title = f"Loss versus step (task={task.info['i']+1}, runs={len(remls)})"
         plot_path = f'{path}/{plot_title}.png'  
-        meta_label = "Meta-trained network"
-        scratch_label = "Baseline trained from scratch"
-        plt.plot(range(steps), [loss.detach().numpy() for loss in meta_task_lossbystep[task]], label=meta_label)
-        plt.plot(range(steps), [loss.detach().numpy() for loss in scratch_task_lossbystep[task]], label=scratch_label)
-        plt.xlabel("Timestep")
-        plt.ylabel("MSE Loss")
+        plt.plot(range(len(meta_task_mean[task])), meta_task_mean[task], label='Meta-trained network mean')
+        plt.plot(range(len(scratch_task_mean[task])), scratch_task_mean[task], label='Baseline mean')
+        plt.fill_between(
+            range(len(meta_task_mean[task])), 
+            [mean - std for mean, std in zip(meta_task_mean[task], meta_task_std[task])], 
+            [mean + std for mean, std in zip(meta_task_mean[task], meta_task_std[task])],
+            alpha=0.2, 
+            label='Meta-trained network std')
+        plt.fill_between(
+            range(len(scratch_task_mean[task])), 
+            [mean - std for mean, std in zip(scratch_task_mean[task], scratch_task_std[task])], 
+            [mean + std for mean, std in zip(scratch_task_mean[task], scratch_task_std[task])],
+            alpha=0.2, 
+            label='Baseline std')
+        plt.xlabel("Timesteps")
+        plt.ylabel("Mean squared error loss (MSE)")
         plt.title(plot_title)
         plt.legend()
 
@@ -574,6 +619,112 @@ def plot_loss_vs_step_curves(reml,
             plt.savefig(plot_path)
             wandb.log({plot_title: wandb.Image(plot_path)})
 
+    # NOTE would need to save the data if I need to recreate the plot (e.g., to change title or legend)
+    # return meta_task_lossbystep, scratch_task_lossbystep
+
+def plot_loss_vs_step_curves(remls,
+                             tasks,
+                             path,
+                             steps=100,
+                             image=False,) -> Tuple[dict]:
+
+    meta_task_mean = defaultdict(lambda: [])
+    meta_task_std = defaultdict(lambda: [])
+    scratch_task_mean = defaultdict(lambda: [])
+    scratch_task_std = defaultdict(lambda: [])
+    meta_task_lossbystep = defaultdict(lambda: [])
+    scratch_task_lossbystep = defaultdict(lambda: [])
+    for task in tasks: 
+        for reml in remls:
+
+            # meta trained network loss
+            env = reml.make_env(task)
+            reml.model.set_env(env, force_reset=False)
+            obs, _ = env.reset()
+            loss_for_this_reml = []
+            while len(env.layers) < config['n_layers_per_network']:
+                action, _ = reml.model.predict(obs)
+                obs, _, done, _, _ = env.step(action)
+                if done: # network built
+                    layers = copy.deepcopy(env.layers)
+                    network = RegressionModel()
+                    network.layers = layers
+                    optimizer = torch.optim.Adam(network.parameters(), lr=config['learning_rate'])
+                    criterion = torch.nn.MSELoss()
+                    for _ in range(steps):
+                        optimizer.zero_grad() 
+                        outputs = network(task.data.view(-1, 1))
+                        loss = criterion(outputs, task.targets.view(-1,1))
+                        loss.backward()
+                        optimizer.step()
+                        loss_for_this_reml.append(loss.detach().numpy())
+        
+            # add list of losses
+            meta_task_lossbystep[task].append(loss_for_this_reml)
+
+            # scratch trained network loss
+            network = RegressionModel()
+            criterion = torch.nn.MSELoss()
+            optimizer = torch.optim.Adam(network.parameters(), lr=config['learning_rate'])
+            network.train()
+            loss_for_this_scratch = []
+            for _ in range(steps):
+                optimizer.zero_grad() 
+                outputs = network(task.data.view(-1, 1))
+                loss = criterion(outputs, task.targets.view(-1,1))
+                loss.backward()
+                optimizer.step()
+                loss_for_this_scratch.append(loss.detach().numpy())
+
+            # add list of losses     
+            scratch_task_lossbystep[task].append(loss_for_this_scratch)
+
+        # meta trained network mean, std
+        array = np.array(meta_task_lossbystep[task])
+        meta_task_mean[task] = [np.mean(array[:, epoch]) for epoch in range(array.shape[1])]
+        meta_task_std[task] = [np.std(array[:, epoch]) for epoch in range(array.shape[1])] 
+
+        # scratch trained network mean, std
+        array = np.array(scratch_task_lossbystep[task])
+        scratch_task_mean[task] = [np.mean(array[:, epoch]) for epoch in range(array.shape[1])]
+        scratch_task_std[task] = [np.std(array[:, epoch]) for epoch in range(array.shape[1])] 
+
+        # # plot loss vs step curve
+        # plt.figure()
+        # meta_label = "Meta-trained network"
+        # scratch_label = "Baseline network from scratch"
+        # plt.plot(range(steps), [loss.detach().numpy() for loss in meta_task_lossbystep[task]], label=meta_label)
+        # plt.plot(range(steps), [loss.detach().numpy() for loss in scratch_task_lossbystep[task]], label=scratch_label)
+
+        # mean, std over runs
+        plt.figure()
+        plot_title = f"Loss versus step (task={task.info['i']+1}, runs={len(remls)})"
+        plot_path = f'{path}/{plot_title}.png'  
+        plt.plot(range(len(meta_task_mean[task])), meta_task_mean[task], label='Meta-trained network mean')
+        plt.plot(range(len(scratch_task_mean[task])), scratch_task_mean[task], label='Baseline mean')
+        plt.fill_between(
+            range(len(meta_task_mean[task])), 
+            [mean - std for mean, std in zip(meta_task_mean[task], meta_task_std[task])], 
+            [mean + std for mean, std in zip(meta_task_mean[task], meta_task_std[task])],
+            alpha=0.2, 
+            label='Meta-trained network std')
+        plt.fill_between(
+            range(len(scratch_task_mean[task])), 
+            [mean - std for mean, std in zip(scratch_task_mean[task], scratch_task_std[task])], 
+            [mean + std for mean, std in zip(scratch_task_mean[task], scratch_task_std[task])],
+            alpha=0.2, 
+            label='Baseline std')
+        plt.xlabel("Timesteps")
+        plt.ylabel("Mean squared error loss (MSE)")
+        plt.title(plot_title)
+        plt.legend()
+
+        # save png / wandb
+        if image:
+            plt.savefig(plot_path)
+            wandb.log({plot_title: wandb.Image(plot_path)})
+
+    # NOTE would need to save the data if I need to recreate the plot (e.g., to change title or legend)
     # return meta_task_lossbystep, scratch_task_lossbystep
 
 def plot_sine_curves(reml, 
@@ -630,9 +781,15 @@ def plot_sine_curves(reml,
         # return if needed 
         xs, yhats = task.data, [yhat.detach().numpy() for yhat in yhats]
         task_yhats[task] = yhats
+
     # return task_yhats
 
-def plot_data_with_variance(data, eval_task_num, title, xlabel):
+def plot_data_with_variance(data, 
+                            eval_task_num, 
+                            title, 
+                            path,
+                            xlabel,
+                            image=False):
     task_mean = {}
     task_std = {}
     for i, task_values in enumerate(data.values()):
@@ -641,8 +798,12 @@ def plot_data_with_variance(data, eval_task_num, title, xlabel):
         assert np.ndim(array)==2, f"[ERROR] Expected ndim=2, got {np.ndim(array)}"
 
         # rows are over n_runs, cols are epochs
+        print(f"task={i}")
+        print(f"array={array}")
         task_mean[i] = [np.mean(array[:, epoch]) for epoch in range(array.shape[1])]
         task_std[i] = [np.std(array[:, epoch]) for epoch in range(array.shape[1])] 
+        print(f"task_mean={task_mean}")
+        print(f"task_std={task_std}")
 
         plt.figure()
         plt.plot(range(len(task_mean[i])), task_mean[i], label='mean')
@@ -652,10 +813,17 @@ def plot_data_with_variance(data, eval_task_num, title, xlabel):
             [mean + std for mean, std in zip(task_mean[i], task_std[i])],
             alpha=0.2, 
             label='std')
-        plt.title(f"{title} (task={i+1})")
+        plot_title = f"{title} (task={i+1})"
+        plt.title(plot_title)
         plt.ylabel(xlabel)
         plt.xlabel("Epochs")
         plt.legend()
+
+        # save png / wandb
+        plot_path = f'{path}/{plot_title}.png'  
+        if image:
+            plt.savefig(plot_path)
+            wandb.log({plot_title: wandb.Image(plot_path)})
 
 def plot_few_shot_learning(reml,
                            eval_task,
@@ -737,69 +905,78 @@ def plot_few_shot_learning(reml,
 
 if __name__ == "__main__":
 
-    # initialize tasks
     tasks = [InnerNetworkTask(data=tasks_data[i], targets=tasks_targets[i], info=tasks_info[i]) for i in range(config['n_tasks'])]
     eval_task = random.choice(list(tasks))
     training_tasks = list(set(tasks) - {eval_task})
-    pool = LayerPool()
 
-    # run preliminaries
-    return_task_runbyepoch = defaultdict(lambda: [])
+    cumureward_task_runbyepoch = defaultdict(lambda: [])
     cumuloss_task_runbyepoch = defaultdict(lambda: [])
     errors_task_runbyepoch = defaultdict(lambda: [])
-    model_param_paths = []
-    name = f"{config['sb3_model']}_{datetime.datetime.now().strftime('%m%d-%H-%M')}"
+
+    # n models saved, n pools saved, and 1 data dict saved
+    # e.g.,
+    # PPO_1218_10-02_model_n -> run n model
+    # PPO_1218_10-02_layers_n -> run n layers
+    # data/PPO_1218_10-02 -> all runs data
+
+    name = f"{config['sb3_model']}_{datetime.datetime.now().strftime('%m%d_%H-%M')}"
     data_path = f"{config['data_dir']}/{name}"
     os.makedirs(data_path, exist_ok=True)
-
-    # e.g., return_task_runbyepoch
-    # task:      
-    #              epoch 1  epoch 2 ... epoch m
-    #       run 1  [[return, return, ...] 
-    #       run 2   [return, return, ...]
-    #        ...    [        ...        ]
-    #       run n   [return, return, ...]]
     for run in range(1, config['n_runs']+1):     
         print(f"[INFO] n={run}")
 
-        # paths
-        model_path = f"{data_path.split('/', 1)[-1]}_{run}"
-        model_param_paths.append(model_path)
+        randomize_seed()
 
-        # train reml
+        # train
+        pool = LayerPool()
         reml = REML(tasks=training_tasks, layer_pool=pool, run=run, path=data_path)
         reml.train()
 
-        # save model params
+        # save model
+        model_path = f"{data_path.split('/', 1)[-1]}_model_{run}"
         reml.model.save(model_path)
 
-        # save data
+        # save pool
+        layers = copy.deepcopy(pool.layers)
+        layers.insert(0, pool.initial_input_layer)
+        layers.append(pool.initial_output_layer)
+        torch.save(layers, f'{name}_layers_{run}.pth')
+
+        # save return, loss, and error data
         for task in tasks:
-            return_task_runbyepoch[str(task.info['i'])].append(reml.return_epochs[str(task.info['i'])])
+            cumureward_task_runbyepoch[str(task.info['i'])].append(reml.cumureward_epochs[str(task.info['i'])])
             cumuloss_task_runbyepoch[str(task.info['i'])].append(reml.cumuloss_epochs[str(task.info['i'])])
             errors_task_runbyepoch[str(task.info['i'])].append(reml.errors_epochs[str(task.info['i'])])
-        
-        # write data
-        with open(f'{data_path}/{name}_returns', 'w') as json_file:
-            json.dump(return_task_runbyepoch, json_file, indent=4)
+        with open(f'{data_path}/{name}_cumureward', 'w') as json_file:
+            json.dump(cumureward_task_runbyepoch, json_file, indent=4)
         with open(f'{data_path}/{name}_cumuloss', 'w') as json_file:
             json.dump(cumuloss_task_runbyepoch, json_file, indent=4)
         with open(f'{data_path}/{name}_errors', 'w') as json_file:
             json.dump(errors_task_runbyepoch, json_file, indent=4)
 
-    # load reml and data 
-    reml = REML(layer_pool=pool, tasks=tasks, path=data_path)
-    reml.model.load(model_param_paths[1]) #TODO: which model (if more than 1) to use for sine curves and few shot learning plots?
-    path = os.path.join(os.getcwd(), data_path, name)
-    returns = json.load(open(f"{path}_returns", 'r'))
-    cumuloss = json.load(open(f"{path}_cumuloss", 'r'))
-    errors = json.load(open(f"{path}_errors", 'r'))
 
-    # generate plots
-    plot_loss_vs_step_curves(reml=reml, tasks=training_tasks, path=data_path)
-    plot_sine_curves(reml=reml, tasks=tasks, path=data_path)
-    plot_data_with_variance(data=returns, eval_task_num=eval_task.info['i'], xlabel="Returns", title="Return by epoch")
-    plot_data_with_variance(data=cumuloss, eval_task_num=eval_task.info['i'], xlabel="Cumulative loss", title="Cumulative loss by epoch")
-    plot_data_with_variance(data=errors, eval_task_num=eval_task.info['i'], xlabel="Errors", title="Errors by epoch")
+    # load pool, model, run data
+    remls = []
+    for i in range(1, config['n_runs']+1):
+        layers = torch.load(f'{name}_layers_{i}.pth')
+        pool = LayerPool()
+        pool.initial_input_layer = layers[0]
+        pool.initial_output_layer = layers.pop()
+        pool.layers = layers
+        reml = REML(layer_pool=pool, tasks=tasks, path=data_path)
+        reml.model.load(f'{name}_model_{i}')
+        remls.append(reml)
+
+        path = os.path.join(os.getcwd(), data_path, name)
+        cumureward = json.load(open(f"{path}_cumureward", 'r'))
+        cumuloss = json.load(open(f"{path}_cumuloss", 'r'))
+        errors = json.load(open(f"{path}_errors", 'r'))
+
+    # figures 
+    plot_loss_vs_step_curves(remls=remls, tasks=training_tasks, path=data_path, image=True)
+    plot_sine_curves(reml=reml, tasks=tasks, path=data_path, image=True)
+    plot_data_with_variance(data=cumureward, eval_task_num=eval_task.info['i'], xlabel="Average cumulative reward", title="Average cumulative reward by epoch", image=True, path=data_path)
+    plot_data_with_variance(data=cumuloss, eval_task_num=eval_task.info['i'], xlabel="Average cumulative loss", title="Average cumulative loss by epoch", image=True, path=data_path)
+    plot_data_with_variance(data=errors, eval_task_num=eval_task.info['i'], xlabel="Errors", title="Average number of errors by epoch", image=True, path=data_path)
     plot_few_shot_learning(reml=reml, eval_task=eval_task, k=5)
     plot_few_shot_learning(reml=reml, eval_task=eval_task, k=10)
