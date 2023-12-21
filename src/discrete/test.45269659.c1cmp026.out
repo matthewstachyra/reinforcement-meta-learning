@@ -1,0 +1,14 @@
+[INFO] Config={'seed': 698, 'device': 'cuda', 'wandb_run': '', 'n_runs': 2, 'epochs': 2, 'timesteps': 100, 'n_x': 100, 'n_tasks': 2, 'task_min_loss': defaultdict(<function <lambda> at 0x2aae239b9440>, {}), 'task_max_loss': defaultdict(<function <lambda> at 0x2aae5f5fd940>, {}), 'in_features': 1, 'out_features': 1, 'n_pool_hidden_layers': 6, 'n_hidden_layers_per_network': 3, 'n_layers_per_network': 5, 'n_nodes_per_layer': 40, 'pool_layer_type': <class 'torch.nn.modules.linear.Linear'>, 'batch_size': 32, 'learning_rate': 0.005, 'discount_factor': 0.95, 'loss_fn': MSELoss(), 'sb3_model': 'RecurrentPPO', 'sb3_policy': 'MlpLstmPolicy', 'data_dir': 'slurm'}
+[INFO] Tasks created.
+[INFO] n=1
+[INFO] Calculating min and max loss for task 1.
+[INFO] Epoch=1/2
+[INFO] Task=1/1
+[INFO] Epoch=2/2
+[INFO] Task=1/1
+[INFO] n=2
+[INFO] Calculating min and max loss for task 1.
+[INFO] Epoch=1/2
+[INFO] Task=1/1
+[INFO] Epoch=2/2
+[INFO] Task=1/1

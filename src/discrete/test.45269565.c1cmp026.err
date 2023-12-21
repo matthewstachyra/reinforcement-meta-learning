@@ -1,0 +1,5 @@
+wandb: Appending key for api.wandb.ai to your netrc file: /cluster/home/mstach01/.netrc
+  File "/cluster/home/mstach01/code/reinforcement-meta-learning/src/discrete/disc-episode-adding-layers.py", line 798
+    tasks = [InnerNetworkTask(data=tasks_data[i], targets=tasks_targets[i], info=tasks_info[i]) for i in range(config['n_tasks'])]
+    ^
+IndentationError: expected an indented block after 'if' statement on line 796
