@@ -1,24 +1,21 @@
-\noindent Meta learning or ``learning to learn" is often applied to training under the 
-constraint where there are few example function evaluations, or \textit{few shot
-learning}. 
-This thesis contributes a new meta-learning algorithm called reinforcement meta-learning
-(REML). 
-REML casts learning to learn as a markov decision process.
-It proposes a system with an outer network that constructs inner networks 
-from a pool of layers for tasks. 
-The outer network is implemented as a recurrent policy gradient method and the 
-inner networks are appropriate to the task.
-This is to my knowledge the first work to use reinforcement learning as a meta-learner
-in a model agnostic fashion (i.e., can work for regression, classification, and 
-reinforcement learning). Previous works have either user RL as a meta learner for other
-RL tasks or use RL to search hyperparameter space. REML searches parameter space for
-theoretically any task that can a neural network can approximate a function for.
-REML is evaluated on sinuosoidal in the same design as the MAML paper. 
-REML shows transfer learning as it converges more quickly than a network trained 
-from scratch across tasks. 
-REML shows meta learning as it can approximate curves with k=5 and k=10 datapoints 
-for unseen tasks. 
-An advantage of REML over other meta-learning algorithms is in the access
-to past trajectories and the global layer pool, which enable it to generalize and handle
-unseen tasks.
+/noindent Meta-learning, often referred to as "learning to learn," is a paradigm within machine learning 
+that focuses on developing models that generalize knowledge across tasks. Such a model learns across 
+tasks as it learns within tasks, enabling the model to adapt quickly to new, unseen tasks. A model for 
+a new task can be generated with near-optimal parameters in no or very few training steps. Meta-learning 
+in machine learning is desirable in cases where there is limited data for a task or when a model needs 
+to learn efficiently within few data samples. This thesis investigates whether Meta-learning can be cast 
+as Reinforcement learning (RL) problem for non-RL tasks. RL applied to Meta-learning has included 
+hyperparameter search for neural architectures and meta-policies in RL task domains (Meta-Reinforcement 
+Learning). RL has not been used to train models (parameter search) for non-RL tasks in the Meta-learning 
+paradigm. This thesis asks: can Meta-learning be formulated as a sequential task? And if Meta-learning 
+can be formulated as a sequential task, can Meta-learning be a discrete-time finite-horizon MDP solved 
+by deep RL? Reinforcement Meta-Learning (REML) is proposed to formulate the Meta-learning task as 
+composing neural networks layer by layer for sampled tasks with a shared parameter space across tasks. 
+REML is evaluated according to the protocol proposed by Finn et al (2018) as used for the Model-agonistic 
+meta-learning (MAML) algorithm. REML is first tested on regression tasks as a series of varying sinusoidal 
+curves. Performance is evaluated looking at loss per step (convergence speed) for a model constructed by 
+REML as compared to a model trained from scratch. REML is also tested on a few-shot learning task where 
+it is given 5 and 10 samples and tested after 0, 1, and 10 gradient steps. Future work is to continue 
+testing REML on classification and reinforcement learning tasks, and expanding  the action space of REML 
+to decide hyperparameters in addition to parameters.
 \clearpage

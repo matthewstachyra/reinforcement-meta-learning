@@ -1046,8 +1046,108 @@
       \verb https://www.wandb.com/
       \endverb
     \endentry
+    \entry{matplotlib}{article}{}
+      \name{author}{1}{}{%
+        {{hash=a27d092a3c70c59360ac990a48514314}{%
+           family={Hunter},
+           familyi={H\bibinitperiod},
+           given={J.\bibnamedelimi D.},
+           giveni={J\bibinitperiod\bibinitdelim D\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {IEEE COMPUTER SOC}%
+      }
+      \strng{namehash}{a27d092a3c70c59360ac990a48514314}
+      \strng{fullhash}{a27d092a3c70c59360ac990a48514314}
+      \strng{bibnamehash}{a27d092a3c70c59360ac990a48514314}
+      \strng{authorbibnamehash}{a27d092a3c70c59360ac990a48514314}
+      \strng{authornamehash}{a27d092a3c70c59360ac990a48514314}
+      \strng{authorfullhash}{a27d092a3c70c59360ac990a48514314}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{Matplotlib is a 2D graphics package used for Python for application development, interactive scripting, and publication-quality image generation across user interfaces and operating systems.}
+      \field{journaltitle}{Computing in Science \& Engineering}
+      \field{number}{3}
+      \field{title}{Matplotlib: A 2D graphics environment}
+      \field{volume}{9}
+      \field{year}{2007}
+      \field{pages}{90\bibrangedash 95}
+      \range{pages}{6}
+      \verb{doi}
+      \verb 10.1109/MCSE.2007.55
+      \endverb
+    \endentry
+    \entry{SciencePlots}{article}{}
+      \name{author}{1}{}{%
+        {{hash=6a7cdc1c8696d4dbf5325fc764249aab}{%
+           family={Garrett},
+           familyi={G\bibinitperiod},
+           given={John\bibnamedelima D.},
+           giveni={J\bibinitperiod\bibinitdelim D\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {Zenodo}%
+      }
+      \strng{namehash}{6a7cdc1c8696d4dbf5325fc764249aab}
+      \strng{fullhash}{6a7cdc1c8696d4dbf5325fc764249aab}
+      \strng{bibnamehash}{6a7cdc1c8696d4dbf5325fc764249aab}
+      \strng{authorbibnamehash}{6a7cdc1c8696d4dbf5325fc764249aab}
+      \strng{authornamehash}{6a7cdc1c8696d4dbf5325fc764249aab}
+      \strng{authorfullhash}{6a7cdc1c8696d4dbf5325fc764249aab}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{month}{9}
+      \field{title}{{garrettj403/SciencePlots}}
+      \field{version}{1.0.9}
+      \field{year}{2021}
+      \verb{doi}
+      \verb 10.5281/zenodo.4106649
+      \endverb
+      \verb{urlraw}
+      \verb http://doi.org/10.5281/zenodo.4106649
+      \endverb
+      \verb{url}
+      \verb http://doi.org/10.5281/zenodo.4106649
+      \endverb
+    \endentry
+    \entry{XavBen:10}{inproceedings}{}
+      \name{author}{2}{}{%
+        {{hash=0b3943c3bfdbb5867b3760f7c7d488c2}{%
+           family={Glorot},
+           familyi={G\bibinitperiod},
+           given={Xavier},
+           giveni={X\bibinitperiod}}}%
+        {{hash=40a8e4774982146adc2688546f54efb2}{%
+           family={Bengio},
+           familyi={B\bibinitperiod},
+           given={Yoshua},
+           giveni={Y\bibinitperiod}}}%
+      }
+      \list{organization}{2}{%
+        {JMLR Workshop}%
+        {Conference Proceedings}%
+      }
+      \strng{namehash}{02af15243279c938a0a5ca766835bcd4}
+      \strng{fullhash}{02af15243279c938a0a5ca766835bcd4}
+      \strng{bibnamehash}{02af15243279c938a0a5ca766835bcd4}
+      \strng{authorbibnamehash}{02af15243279c938a0a5ca766835bcd4}
+      \strng{authornamehash}{02af15243279c938a0a5ca766835bcd4}
+      \strng{authorfullhash}{02af15243279c938a0a5ca766835bcd4}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{booktitle}{Proceedings of the thirteenth international conference on artificial intelligence and statistics}
+      \field{title}{Understanding the difficulty of training deep feedforward neural networks}
+      \field{year}{2010}
+      \field{pages}{249\bibrangedash 256}
+      \range{pages}{8}
+    \endentry
   \enddatalist
-  \missing{mmatplotlib SciencePlots}
 \endrefsection
 \endinput
 

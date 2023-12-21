@@ -22,21 +22,17 @@ from sb3_contrib import RecurrentPPO
 from stable_baselines3 import PPO
 import wandb
 import matplotlib.pyplot as plt
-import scienceplots
 
-plt.style.use(['science','ieee', 'notebook', 'bright'])
-plt.rcParams.update({'figure.dpi': '75'})
-
-# configuration
 default_config = {
     'seed' : 41,
     'device' : 'cuda',
     'wandb_run' : '',
-    'n_runs' : 2,
-    'epochs' : 3,
+    'timestamp' : '',
+    'n_runs' : 1,
+    'epochs' : 1,
     'timesteps' : 100,
     'n_x' : 100,
-    'n_tasks' : 2,
+    'n_tasks' : 7,
     'task_min_loss' : defaultdict(lambda: float('inf')),
     'task_max_loss' : defaultdict(lambda: -float('inf')),
     'in_features' : 1,
@@ -46,9 +42,12 @@ default_config = {
     'n_layers_per_network' : 5,
     'n_nodes_per_layer' : 40,
     'pool_layer_type' : torch.nn.Linear,
-    'batch_size' : 32,
-    'learning_rate' : 0.005,
-    'discount_factor' : 0.95,
+    'batch_size' : 64,
+    'learning_rate' : 0.01,
+    'meta_learning_rate' : 0.0003, # 0.01, 0.001, 0.0003
+    'meta_batch_size' :  32, # 32, 64(default), 128
+    'meta_clip_range' : 0.1, # 0.1, 0.2 (default), 0.3 
+    'meta_n_steps' : 128, # 5, 128, 1024, 2048 (default)
     'loss_fn' : torch.nn.MSELoss(),
     'sb3_model' : 'PPO',
     'sb3_policy' : 'MlpPolicy',
@@ -57,7 +56,6 @@ default_config = {
 config = default_config
 config['n_pool_hidden_layers'] = config['n_tasks'] * config['n_hidden_layers_per_network']
 parser = argparse.ArgumentParser(description="REML command line")
-parser.add_argument('--device', type=str, default=default_config['device'], help='Device to run computations', required=False)
 parser.add_argument('--n_runs', type=int, default=default_config['n_runs'], help='Number of runs', required=False)
 parser.add_argument('--n_tasks', type=int, default=default_config['n_tasks'], help='Number of tasks to generate', required=False)
 parser.add_argument('--epochs', '-e', type=int, default=default_config['epochs'], help='Epochs', required=False)
@@ -65,12 +63,15 @@ parser.add_argument('--timesteps', '-t', type=int, default=default_config['times
 parser.add_argument('--sb3_model',  type=str, default=default_config['sb3_model'], help='SB3 model to use', required=False)
 parser.add_argument('--sb3_policy', type=str, default=default_config['sb3_policy'], help='SB3 policy to use', required=False)
 parser.add_argument('--data_dir', '-o', type=str, default=default_config['data_dir'], help='Directory to save tensorboard logs', required=False)
-parser.add_argument('--n_layers_per_network', type=int, default=default_config['n_layers_per_network'], help='Number of layers per network', required=False)
 parser.add_argument('--wandb_run', type=str, default=default_config['wandb_run'], help='Name of run on wandb', required=False)
+parser.add_argument('--meta_learning_rate', type=float, default=default_config['meta_learning_rate'], help='Learning rate', required=False)
+parser.add_argument('--meta_batch_size', type=int, default=default_config['meta_batch_size'], help='Batch size', required=False)
+parser.add_argument('--meta_clip_range', type=float, default=default_config['meta_clip_range'], help='Clip range', required=False)
+parser.add_argument('--meta_n_steps', type=int, default=default_config['meta_n_steps'], help='Horizon', required=False)
 args = parser.parse_args()
 config = { key : getattr(args, key, default_value) for key, default_value in default_config.items() }
 
-# set seed
+# seed
 def randomize_seed():
     new_seed = random.randint(1, 1000)
     config['seed'] = new_seed
@@ -79,7 +80,10 @@ def randomize_seed():
     torch.manual_seed(config['seed'])
 randomize_seed()
 
-# initialize wandb
+# wandb
+timestamp = datetime.datetime.now().strftime('%m%d_%H-%M')
+name = f"{config['sb3_model']}_{timestamp}"
+config['timestamp'] = timestamp
 wandb.init(
     project='reinforcement-meta-learning',
     config=config,
@@ -87,23 +91,25 @@ wandb.init(
 )
 print(f'[INFO] Config={config}')
 
-# create tasks
+# tasks
 lower_bound = torch.tensor(-5).float()
 upper_bound = torch.tensor(5).float()
 X = np.linspace(lower_bound, upper_bound, config['n_x'])
 amplitude_range = torch.tensor([0.1, 5.0]).float()
 phase_range = torch.tensor([0, math.pi]).float()
-amps = torch.from_numpy(np.linspace(amplitude_range[0], amplitude_range[1], config['n_tasks'])).float()
-phases = torch.from_numpy(np.linspace(phase_range[0], phase_range[1], config['n_tasks'])).float()
-tasks_data = torch.tensor(np.array([ 
-        X
-        for _ in range(config['n_tasks'])
-        ])).float()
+
+amps = torch.rand(config['n_tasks'], 1) * (amplitude_range[1] - amplitude_range[0]) + amplitude_range[0]
+phases = torch.rand(config['n_tasks'], 1) * (phase_range[1] - phase_range[0]) + phase_range[0]
+
+tasks_data = torch.tensor(np.array([
+    X
+    for _ in range(config['n_tasks'])
+])).float()
 tasks_targets = torch.tensor(np.array([
-        [((a * np.sin(x)) + p).float()
-        for x in X] 
-        for a, p in zip(amps, phases)
-        ])).float()
+    [(a * np.sin(x + p)).float()
+     for x in X]
+    for a, p in zip(amps, phases)
+])).float()
 tasks_info = [
         {'i' : i, 
          'amp' : a, 
@@ -147,9 +153,6 @@ class LayerPool:
         return f"LayerPool(size={self.size}, layer_type={config['pool_layer_type']}, num_nodes_per_layer={config['n_nodes_per_layer']}"
 
 class InnerNetworkAction(Enum):
-    # no action is 0 to prevent multiplication
-    # by 0 in building s prime with the past n
-    # action enum values
     ADD = 1
     ERROR = 2
 
@@ -259,7 +262,7 @@ class InnerNetwork(gymnasium.Env, torch.nn.Module):
         reward = self.reward()
         self.log()
 
-        # update pool
+        # pool
         for index, layer in zip(self.layers_pool_indices, self.layers[1:-1]):
             self.layer_pool.layers[index] = layer
 
@@ -332,7 +335,7 @@ class InnerNetwork(gymnasium.Env, torch.nn.Module):
         self.curr['loss'].backward()
     
     def train_inner_network(self) -> None: 
-        for _ in range(10):
+        for _ in range(50):
             self.opt = torch.optim.Adam(self.layers.parameters(), lr=self.learning_rate) 
             self.opt.zero_grad()
             self.forward()
@@ -435,7 +438,13 @@ class REML:
             model = RecurrentPPO
         dummy_env = self.make_env(tasks[0], layer_pool) 
         self.run = run
-        self.model = model(policy, dummy_env, seed=config['seed'])
+        self.model = model(policy, 
+                           dummy_env, 
+                           seed=config['seed'], 
+                           n_steps=config['meta_n_steps'], 
+                           learning_rate=config['meta_learning_rate'],
+                           clip_range=config['meta_clip_range'],
+                           batch_size=config['meta_batch_size'])
         self.policy = policy
         self.epochs = epochs
         self.timesteps = timesteps
@@ -518,280 +527,6 @@ class RegressionModel(torch.nn.Module):
         x = self.layers[-1](x)
         return x
 
-def plot_loss_vs_step_curves(remls,
-                             tasks,
-                             path,
-                             steps=100,
-                             image=False,) -> Tuple[dict]:
-    
-    # plot used for training tasksa and for eval tasks
-
-    meta_task_mean = defaultdict(lambda: [])
-    meta_task_std = defaultdict(lambda: [])
-    scratch_task_mean = defaultdict(lambda: [])
-    scratch_task_std = defaultdict(lambda: [])
-    meta_task_lossbystep = defaultdict(lambda: [])
-    scratch_task_lossbystep = defaultdict(lambda: [])
-    for task in tasks: 
-        for reml in remls:
-
-            # meta trained network loss
-            env = reml.make_env(task)
-            reml.model.set_env(env, force_reset=False)
-            obs, _ = env.reset()
-            loss_for_this_reml = []
-            while len(env.layers) < config['n_layers_per_network']:
-                action, _ = reml.model.predict(obs)
-                obs, _, done, _, _ = env.step(action)
-                if done: # network built
-                    layers = copy.deepcopy(env.layers)
-                    network = RegressionModel()
-                    network.layers = layers
-                    optimizer = torch.optim.Adam(network.parameters(), lr=config['learning_rate'])
-                    criterion = torch.nn.MSELoss()
-
-                    # train built network 100 steps
-                    for _ in range(steps):
-                        optimizer.zero_grad() 
-                        outputs = network(task.data.view(-1, 1))
-                        loss = criterion(outputs, task.targets.view(-1,1))
-                        loss.backward()
-                        optimizer.step()
-                        loss_for_this_reml.append(loss.detach().numpy())
-        
-            # add list of losses
-            meta_task_lossbystep[task].append(loss_for_this_reml)
-
-            # scratch trained network loss
-            network = RegressionModel()
-            criterion = torch.nn.MSELoss()
-            optimizer = torch.optim.Adam(network.parameters(), lr=config['learning_rate'])
-            network.train()
-            loss_for_this_scratch = []
-            for _ in range(steps):
-                optimizer.zero_grad() 
-                outputs = network(task.data.view(-1, 1))
-                loss = criterion(outputs, task.targets.view(-1,1))
-                loss.backward()
-                optimizer.step()
-                loss_for_this_scratch.append(loss.detach().numpy())
-
-            # add list of losses     
-            scratch_task_lossbystep[task].append(loss_for_this_scratch)
-
-        # meta trained network mean, std
-        array = np.array(meta_task_lossbystep[task])
-        meta_task_mean[task] = [np.mean(array[:, epoch]) for epoch in range(array.shape[1])]
-        meta_task_std[task] = [np.std(array[:, epoch]) for epoch in range(array.shape[1])] 
-
-        # scratch trained network mean, std
-        array = np.array(scratch_task_lossbystep[task])
-        scratch_task_mean[task] = [np.mean(array[:, epoch]) for epoch in range(array.shape[1])]
-        scratch_task_std[task] = [np.std(array[:, epoch]) for epoch in range(array.shape[1])] 
-
-        # mean, std over runs
-        plt.figure()
-        plot_title = f"Loss versus step (task={task.info['i']+1}, runs={len(remls)})"
-        plot_path = f'{path}/{plot_title}.png'  
-        plt.plot(range(len(meta_task_mean[task])), meta_task_mean[task], label='Meta-trained network mean')
-        plt.plot(range(len(scratch_task_mean[task])), scratch_task_mean[task], label='Baseline mean')
-        plt.fill_between(
-            range(len(meta_task_mean[task])), 
-            [mean - std for mean, std in zip(meta_task_mean[task], meta_task_std[task])], 
-            [mean + std for mean, std in zip(meta_task_mean[task], meta_task_std[task])],
-            alpha=0.2, 
-            label='Meta-trained network std')
-        plt.fill_between(
-            range(len(scratch_task_mean[task])), 
-            [mean - std for mean, std in zip(scratch_task_mean[task], scratch_task_std[task])], 
-            [mean + std for mean, std in zip(scratch_task_mean[task], scratch_task_std[task])],
-            alpha=0.2, 
-            label='Baseline std')
-        plt.xlabel("Timesteps")
-        plt.ylabel("Mean squared error loss (MSE)")
-        plt.title(plot_title)
-        plt.legend(loc='upper right')
-
-        # save png / wandb
-        if image:
-            plt.savefig(plot_path)
-            wandb.log({plot_title: wandb.Image(plot_path)})
-
-    # NOTE would need to save the data if I need to recreate the plot (e.g., to change title or legend)
-    # return meta_task_lossbystep, scratch_task_lossbystep
-
-def plot_sine_curves(reml, 
-                     tasks, 
-                     path,
-                     run=None,
-                     epoch=None, 
-                     image=False, 
-                     eval_task=None,
-                     args=defaultdict()) -> dict:
-
-    task_yhats = defaultdict(lambda: None)
-    for task in tasks: 
-        if task==eval_task: continue
-        # set env
-        env = reml.make_env(task)
-        reml.model.set_env(env, force_reset=False)
-
-        # build network in env
-        obs, _ = env.reset()
-        while len(env.layers)!=config['n_layers_per_network']:
-            action, _ = reml.model.predict(obs)
-            obs, _, _, _, _ = env.step(action)
-
-        # run network to get yhats
-        xs, ys = task.data.clone(), task.targets.clone()
-        xs, ys = xs.view(len(xs), 1), ys.view(len(ys), 1)
-        env.curr['x'] = xs
-        env.curr['y'] = ys
-        env.forward()
-        yhats = env.curr['y_hat']
-
-        # plot sine curve
-        plt.figure()
-        if epoch!=None and run!=None:
-            plot_title = f"Sine curve (run={run}, epoch={epoch}, task={task.info['i']+1})" 
-        elif epoch!=None:
-            plot_title = f"Sine curve (epoch={epoch}, task={task.info['i']+1})" 
-        else:
-            plot_title= f"Sine curve (task={task.info['i']+1})"
-        plot_path = f'{path}/{plot_title}.png'  
-        plt.plot(task.data, [yhat.detach().numpy() for yhat in yhats], **args)
-        plt.plot(task.data, task.targets, label='ground truth', linestyle='--')
-        plt.xlabel("X")
-        plt.ylabel("Y")
-        plt.title(plot_title)
-        plt.legend(loc='upper right')
-
-        # save png / wandb
-        if image:
-            plt.savefig(plot_path, bbox_inches='tight')
-            wandb.log({plot_title: wandb.Image(plot_path)})
-
-        # return if needed 
-        xs, yhats = task.data, [yhat.detach().numpy() for yhat in yhats]
-        task_yhats[task] = yhats
-
-    # return task_yhats
-
-def plot_data_with_variance(data, 
-                            eval_task_num, 
-                            title, 
-                            path,
-                            xlabel,
-                            image=False):
-    task_mean = {}
-    task_std = {}
-    for i, task_values in enumerate(data.values()):
-        if i==eval_task_num: continue
-        array = np.array(task_values)
-        assert np.ndim(array)==2, f"[ERROR] Expected ndim=2, got {np.ndim(array)}"
-
-        # rows are over n_runs, cols are epochs
-        task_mean[i] = [np.mean(array[:, epoch]) for epoch in range(array.shape[1])]
-        task_std[i] = [np.std(array[:, epoch]) for epoch in range(array.shape[1])] 
-
-        plt.figure()
-        plt.plot(range(len(task_mean[i])), task_mean[i], label='mean')
-        plt.fill_between(
-            range(len(task_mean[i])), 
-            [mean - std for mean, std in zip(task_mean[i], task_std[i])], 
-            [mean + std for mean, std in zip(task_mean[i], task_std[i])],
-            alpha=0.2, 
-            label='std')
-        plot_title = f"{title} (task={i+1})"
-        plt.title(plot_title)
-        plt.xticks(range(1, config['epochs']+1, 10))
-        plt.ylabel(xlabel)
-        plt.xlabel("Epochs")
-        plt.legend(loc='upper right')
-
-        # save png / wandb
-        plot_path = f'{path}/{plot_title}.png'  
-        if image:
-            plt.savefig(plot_path, bbox_inches='tight')
-            wandb.log({plot_title: wandb.Image(plot_path)})
-
-def plot_few_shot_learning(reml,
-                           eval_task,
-                           k=5):
-
-    # network still recieves the same 100 x values {-5, ..., 5}
-    # the difference is that a target value is only provided for 5 or 10 of these 100 values
-
-    k_data_points = torch.tensor(random.sample(list(zip(eval_task.data, eval_task.targets)), k))
-    env = reml.make_env(eval_task)
-    reml.model.set_env(env, force_reset=False)
-    reml.task = eval_task
-
-    # build network in env, then generate plots
-    obs, _ = env.reset()
-    while len(env.layers)!=config['n_layers_per_network']:
-        action, _ = reml.model.predict(obs)
-        obs, _, done, _, _ = env.step(action)
-        if done: # network built
-            layers = copy.deepcopy(env.layers)
-            network = RegressionModel()
-            network.layers = layers
-            optimizer = torch.optim.Adam(network.parameters(), lr=config['learning_rate'])
-            criterion = torch.nn.MSELoss()
-
-            k_x = k_data_points[:, 0].clone()
-            k_x = k_x.view(len(k_x), 1) # reshape batch to k (k, 1)
-            k_y = k_data_points[:, 1].clone()
-            k_y = k_y.view(len(k_y), 1)
-
-            # 0 grad steps / preupdate on all data
-            xs = eval_task.data.clone()
-            preupdate_outputs = network(xs.view(len(xs), 1)) # reshape to dataset size (100, 1)
-
-            # 1 grad step on k 
-            for _ in range(1):
-                optimizer.zero_grad()
-                outputs = network(k_x)
-                loss = criterion(outputs, k_y)
-                loss.backward()
-                optimizer.step()
-            optimizer.zero_grad()
-            outputs = network(xs.view(len(xs), 1)) # but then get curve for full dataset
-            outputs_after_1_grad_step = [output.detach().numpy() for output in outputs]
-
-            # 10 grad step
-            for _ in range(10):
-                optimizer.zero_grad() 
-                outputs = network(k_x)
-                loss = criterion(outputs, k_y)
-                loss.backward()
-                optimizer.step()
-            optimizer.zero_grad()
-            outputs = network(xs.view(len(xs), 1))
-            outputs_after_10_grad_step = [output.detach().numpy() for output in outputs]
-        
-            continue
-
-    # pre-update plot
-    plt.figure()
-    plt.plot(eval_task.data, [yhat.detach().numpy() for yhat in preupdate_outputs], linestyle='--', label='pre-update')
-
-    # ground truth plot
-    plt.plot(eval_task.data, eval_task.targets, linestyle='--', label='ground truth')
-
-    # k points plot
-    plt.scatter(k_data_points[:, 0], k_data_points[:, 1], marker='^', color='b', label='k points')
-
-    # 1 grad step training plot
-    plt.plot(eval_task.data, outputs_after_1_grad_step, label='1 grad step')
-        
-    # 10 grad steps training plot
-    plt.plot(eval_task.data, outputs_after_10_grad_step, label='10 grad step')
-
-    plt.title(f'Few shot learning (evaluation task, k={k})')
-    plt.xlabel('X')
-    plt.ylabel('Y')
-    plt.legend()
 
 if __name__ == "__main__":
 
@@ -808,7 +543,6 @@ if __name__ == "__main__":
     cumureward_task_runbyepoch = defaultdict(lambda: [])
     cumuloss_task_runbyepoch = defaultdict(lambda: [])
     errors_task_runbyepoch = defaultdict(lambda: [])
-    name = f"{config['sb3_model']}_{datetime.datetime.now().strftime('%m%d_%H-%M')}"
     data_path = f"{config['data_dir']}/{name}"
     os.makedirs(data_path, exist_ok=True)
 
@@ -847,32 +581,3 @@ if __name__ == "__main__":
             json.dump(cumuloss_task_runbyepoch, json_file, indent=4)
         with open(f'{data_path}/{name}_errors', 'w') as json_file:
             json.dump(errors_task_runbyepoch, json_file, indent=4)
-
-
-    # load pool, model, run data
-    training_tasks = torch.load(f'{name}_trainingtasks.pth')
-    eval_task = torch.load(f'{name}_evaltask.pth')
-    path = os.path.join(os.getcwd(), data_path, name)
-    cumureward = json.load(open(f"{path}_cumureward", 'r'))
-    cumuloss = json.load(open(f"{path}_cumuloss", 'r'))
-    errors = json.load(open(f"{path}_errors", 'r'))
-    remls = []
-    for i in range(1, config['n_runs']+1):
-        layers = torch.load(f'{name}_layers_{i}.pth')
-        pool = LayerPool()
-        pool.initial_input_layer = layers[0]
-        pool.initial_output_layer = layers.pop()
-        pool.layers = layers
-        reml = REML(layer_pool=pool, tasks=tasks, path=data_path)
-        reml.model.load(f'{name}_model_{i}')
-        remls.append(reml)
-
-    # figures 
-    plot_loss_vs_step_curves(remls, tasks=training_tasks, path=data_path, image=True)
-    plot_loss_vs_step_curves(remls, tasks=[eval_task], path=data_path, image=True)
-    plot_sine_curves(reml=reml, tasks=tasks, path=data_path, image=True)
-    plot_data_with_variance(data=cumureward, path=data_path, eval_task_num=eval_task.info['i'], xlabel="Returns", title="Return by epoch", image=True)
-    plot_data_with_variance(data=cumuloss, path=data_path, eval_task_num=eval_task.info['i'], xlabel="Cumulative loss", title="Cumulative loss by epoch", image=True)
-    plot_data_with_variance(data=errors, path=data_path, eval_task_num=eval_task.info['i'], xlabel="Errors", title="Errors by epoch", image=True)
-    plot_few_shot_learning(reml=reml, eval_task=eval_task, k=5, image=True)
-    plot_few_shot_learning(reml=reml, eval_task=eval_task, k=10, image=True)

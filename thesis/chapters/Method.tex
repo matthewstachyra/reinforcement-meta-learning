@@ -55,17 +55,18 @@ $\mathcal{O}$) has the same dimension for all tasks $\mathcal{T} \in \mathcal{D}
 Different sets of task $\mathcal{D}$ would have different dimensions for layer in
 the pool.
 \\\\
-Training consists of episodes of length $T$. The episode terminates when the 
-sequenced network $N$ reaches a pre-defined depth. At timestep $t=0$, $N$ is initialized
-with 2 layers, an input layer $\mathcal{I}$ and output layer $\mathcal{O}$. 
-Each timestep $t \in T$ REML selects a layer from $\mathcal{L}$ to sequence in $N$. 
-The state $s \in \mathcal{S}$ passed in each timestep is composed of: information 
-characterizing the task $\mathcal{T}$, 
-the magnitude of yhats (max absolute value), 
-the sequence of layers represented as indices within $\mathcal{L}$, 
-the latent space of $N$ (the feed-forward calculation of that state's $N$ up to and 
-not including the output layer). 
-The reward is the negative mean square error loss (MSE loss) signal. 
+Training starts with sampling training tasks $\mathcal{T}$ and initializing $N$ 
+with an input layer $\mathcal{I}$ and output layer $\mathcal{O}$ from $\mathcal{L}$.
+Training consists of episodes where an episode terminates when the 
+sequenced network $N$ reaches a pre-defined depth. 
+Each step, REML selects a layer from $\mathcal{L}$ to sequence in $N$ based on the
+state $s \in \mathcal{S}$. 
+The state $s$ is composed of 
+information characterizing the task $\mathcal{T}$, 
+the magnitude of outputs from $N$ as a max absolute value of outputs seen for the task, 
+the sequence of layers represented as indices within $\mathcal{L}$.
+The reward is the negative mean square error loss (MSE loss) signal of $N$ after $N$
+is tested on a batch of data from task $\mathcal{T}$.
 At the end of an episode, layers are trained with the Adam optimizer \cite{KinBa:14}. A treatment of the negative mean 
 squared loss error (MSE loss) is the reward signal. 
 The trained layer copies are then updated in the layer pool $\mathcal{L}$. 
@@ -148,42 +149,41 @@ crediting those actions that lead to high initial loss, and making REML less lik
 to choose them again. The reward is shaped to instruct REML to choose layers 
 in a sequence that has the lowest MSE loss.
 \\\\
-The purpose of the discount 
-factor was to assign more credit to earlier actions (i.e., the first couple layers 
-sequenced by REML) and to discredit high reward values that began as very high loss
-values tempered by the Adam optimizer being very effective.
+The purpose of the discount factor was to assign more credit to earlier actions 
+(i.e., the first couple layers sequenced by REML) and to discredit high reward 
+values that began as very high loss values tempered by the Adam optimizer being 
+very effective.
 
 \section{Algorithm}
 \begin{algorithm}
-\caption{Reinforcement Meta-learning (REML)}\label{alg:cap}
+\caption{Reinforcement Meta-learning}\label{alg:cap}
 \begin{algorithmic}
-\State \textbf{Input:} $\alpha$, $\beta$: step-size hyperparameters
-\State \textbf{Input:} $T$: set of tasks $t$ 
-\State \textbf{Input:} $f_{\theta_{super}}$: RL agent parameterized $\theta_{super}$
-\State \textbf{Input:} $L$: set of layers $l$
-\State Randomly initialize $\theta_{super}$
-\State Randomly initialize all $l \in L$ with $\theta_{sub}$
-\For{$t_i \in T$} % this constitutes one epoch of training
-\State Sample $d$ from $\mathcal{D} = \{\mathbf{x}^{(j)}, \mathbf{y}^{(j)}\}$ for $t_i$
-\State Pass $d$ through an initial layer in $L$ to get initial state $s_k$ 
-\While{not done} % capped by the number of training steps
-\State Get next layer $l_k \in L$ via $f_{\theta_{super}}(s_k)$
-\State Expand $\theta_{sub}$ with $l_k$'s $\theta$
-\State Evaluate $\mathcal{L}_{\theta_{super}}$ for chosen $f_{super}$ 
-\State Evaluate $\mathcal{L}_{\theta_{sub}}$ for chosen $f_{sub}$ 
-\State $\theta_{super} \leftarrow \theta_{super} + \alpha \nabla \mathcal{L}_{\theta_{super}}$ 
-\State $\theta_{sub} \leftarrow \theta_{sub} + \beta \nabla \mathcal{L}_{\theta_{sub}}$ 
-\State Sample $d$ from $\mathcal{D} = \{\mathbf{x}^{(j)}, \mathbf{y}^{(j)}\}$ for $t_i$
-\State Update state $s_k$ via $f_{\theta_{sub}} (d)$
+\State \textbf{Input:} $\alpha$, $\beta$: learning rate hyperparameters
+\State \textbf{Input:} $p(\mathcal{T})$: distribution over tasks $t$ 
+\State \textbf{Input:} $\mathcal{L}$: set of layers $l$
+\State \textbf{Input:} $f_{\theta_{o}}$: policy $\theta_{o}$
+\State Initialize all $l \in \mathcal{L}$ with $\theta_{i}$
+\State Sample training tasks $\mathcal{T}_i$ from $p(\mathcal{T})$
+\ForAll{$\mathcal{T}_i$} % tasks
+\State Initialize network $N$ 
+\While{not done} % termination on complete N
+\State Sample batch $\{\mathbf{x}^{(j)}, \mathbf{y}^{(j)}\}$ from $\mathcal{T}_{i}$
+\State Pass $\{\mathbf{x}^{(j)}, \mathbf{y}^{(j)}\}$ through $N$ to get next state $s_k$ 
+\State Get next layer $l_k \in L$ via $f_{\theta_{o}}(s_k)$
+\State Expand $\theta_{i}$ with $l_k$'s $\theta$
+\State Evaluate $\mathcal{L}_{\theta_{o}}$ for chosen $f_{o}$ 
+\State Evaluate $\mathcal{L}_{\theta_{i}}$ for chosen $f_{i}$ 
+\State $\theta_{o} \leftarrow \theta_{o} + \alpha \nabla \mathcal{L}_{\theta_{o}}$ 
+\State $\theta_{i} \leftarrow \theta_{i} + \beta \nabla \mathcal{L}_{\theta_{i}}$ 
 \EndWhile
 \EndFor
 \end{algorithmic}
 \end{algorithm}
 
 \section{Implementation}
-REML was implemented using Pytorch for the layers and functions comprising the 
-inner networks and Stablebaselines3 with its open-source implementations of deep RL 
-algorithm for the outer network or meta-policy \cite{pytorch, RafHilGleKanErnDor:21}. 
+REML was implemented using Pytorch for the layer pool and functions as part of the 
+the constructed networks $N$. Stablebaselines3 was used for policy with its open-source 
+implementations of deep RL algorithms \cite{pytorch, RafHilGleKanErnDor:21}. 
 Stablebaselines3 was developed by researchers with the intent to 
 provide reliable baselines given recent findings that deep RL results are hard to 
 reproduce. It ws found that the same RL algorithms produce different results depending 
@@ -194,11 +194,11 @@ on common environments used in research and compares theirs to other implementat
 Environments used in thesis are custom and created by the author using Gymnasium \cite{gymnasium}.
 \\\\
 Computations were carried out using the Tufts University High Performance Cluster (HPC) 
-with 1 P100 GPU for batch jobs running about 4 hours for the regression and 12
-hours for the classification tasks.
+with available gpu for batch jobs running about 15 hours for the regression tasks across 10 runs 
+of 30 epochs and 7 tasks. 
 \\\\
 Evaluation data was captured and analyzed using Tensorboard and Weights \& Biases (wandb)
 \cite{tensorflow2015-whitepaper, wandb}. Plots were generated using matplotlib with 
-scienceplots \cite{mmatplotlib SciencePlots}.
+scienceplots \cite{matplotlib, SciencePlots}.
 
 

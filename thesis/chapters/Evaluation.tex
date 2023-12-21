@@ -2,56 +2,87 @@
 \label{Evaluation}
 The following research questions guided evaluation of REML:
 \begin{itemize}
-    \item Can REML enable models to transfer knowledge from one domain 
-    to another (can it be sample efficient)? 
-    \item Can REML generate models that learn from a few examples 
-    (can it do few shot learning)? 
-    \item Can REML generate models for different modes of learning such 
-    as regression and classification (does it support multimodal learning)?
+    \item Can REML transfer knowledge from tasks it has learned 
+    to new tasks?
+    \item How well does this model adapt to new tasks while retaining
+    previously learned knowledge (does REML generalize without
+    catastrophic forgetting)?
+    \item Can REML generate models that learn near-optimal parameters 
+    from few examples for unseen tasks (can it do few-shot learning)? 
 \end{itemize}
-The first two questions (i.e., whether REML is sample efficient and can 
-support few shot learning) are evaluated in context of the third question 
-for both regression and classification tasks. 
+These questions are evaluated in the context of a non-RL task with
+regression. REML is evaluated using varying sinusoidal curves, following the protocol 
+proposed by Finn, Abbeel, and Levine for Model Agnostic Meta-learning (MAML) 
+\cite{FinAbbLev:17}. Sine curves have an inherent periodicity for the meta-learner
+to learn across tasks.
+
+\section{Sinusoidal curve regression}
+The testbed is defined as a distribution of sine curves that vary in 
+amplitude and phase shift. The amplitude is chosen from [0.1, 5.0] and 
+phase shift is chosen from [0, pi]. Each task is a dataset with 100
+values linearly spaced within [-5, 5]. Batches of size 32 and 64 are 
+tested and compared with learning rates of 0.005 and 0.01.
 \\\\
-Each learining mode evaluates the performance of the outer network (i.e., the 
-meta-policy) and the inner networks generated and trained by the meta-policy. 
-The outer network's policy is evaluated according to its:
+The layer pool $\mathcal{L}$ for this regression task is composed of linear 
+layers with 40 nodes. Layers are initialized with Xavier Glorot initialization to 
+minimize the chance of exploding or vanishing gradients, particularly in the 
+recurrent policy case. Xavier Glorot initialization initializes the parameters 
+with the aim to keep variance of activations similar across layers \cite{XavBen:10}.
+The max depth of each constructed $N$ is 5 with 3 hidden 
+layers. The activation function between hidden layers is the ReLU to introduce 
+non-linearity in the approximation. The activation function for the output layer
+is just the identity function given this is regression. Leaky ReLU was tested with 
+different alpha values but it generally slowed down convergence and there was no need
+without any observed irregularies in gradients. The hyperparameters for $N$ are 
+set ahead of time as the task is parameter search not hyperparameter search. 
+\\\\
+The Adam optimizer is used to train each $N$ at the end of an episode over 10 gradient 
+steps \cite{KinBa:14}. Such a small number of gradient steps is chosen to train for the few-shot 
+learning task where $k$ is no more than 10. Fewer gradient steps with Adam also 
+overcome the challenge discussed in the Method where Adam would compensate for REML's 
+errors and train a "bad" sequence of layers to the same or better MSE loss performance 
+than a sequence of layers observed with lower MSE loss without any gradient steps.
+\\\\
+The MLP policy and LSTM policies tested with PPO are neural networks with 64 nodes 
+per layer with 2 layers, as defined by the benchmark implementation provided by Stablebaselines3 
+\cite{RafHilGleKanErnDor:21}. The default hyperparameters for the PPO implemenetation
+are used. The policy takes 2048 steps before making an update to the parameters with
+a batch size of 64. The learning rate is 0.0003 with a discount factor is 0.9.
+\\\\
+Training performance is evaluated over epochs, averaged over 10 runs. 
+An epoch is here defined as one pass through the tasks. 
+Each task is trained in episodes where an episode terminates when the constructed
+$N$ has reached 5 layers. This may be more than 5 steps if REML continutes to make 
+errors; in the case of errors, no layer is added to $N$ and REML receives a penalty. 
+The below metrics are gathered per epoch, by task.
 \begin{itemize}
-    \item return per epoch (i.e., a pass through all tasks)
-    \item ability to converge in fewer training steps than a neural network trained 
-    without a meta-learner with the same hyperparameters for the same tasks (i.e.,
-    show \textit{transfer learning})
-    \item ability to generalize to unseen tasks with few data points (e.g., k=5,
-    k=10) (i.e., show \textit{few-shot learning})
+    \item cumulative MSE loss of $N$ 
+    \item cumulative reward to REML
+    \item cumulative errors made by REML
 \end{itemize}
-The inner networks are evaluated according to the requirements of the task
-for the regression and for classification. For regression, the networks'
-loss is tracked per timestep to see if it is learning as well as the curve fit
-for the sine curve in the task. For classification, the networks' accuracy across
-classes is evaluated.
-\section{Regression}
-\subsection{Sine curves}
-REML was first evaluated on relatively simple sine curves, following the same
-protocol 2018, Finn et all performed on MAML \cite{FinAbbLev:17}. 
-The task is defined as a sine curve within a distribution of curves that vary in 
-their amplitude and phase shift. The amplitude is chosen from [0.1, 5.0] and 
-phase shift is chosen from [0, pi]. 
-\\\\
-The outer-network's role for the task is to construct a neural network
-that can provide a best fit curve for the sinusoidal function. The inner-network's
-role (as it is constructed by the outer network) is to predict a value as close
-as possible to the target output for the input.
-\\\\
-The inner network generated by the outer network had set hyperparameters. Each
-network could have up to 5 layers, with the hidden layers represented as fully
-connected layers with 40 nodes. ReLU activation functions were used in between
-each hidden layer, and the identity function for the final output layer as 
-this is regression. Leaky ReLU was tested with different alpha values but
-it generally slowed down convergence and there was no need to used it as 
-this bounded design (i.e., a pre-set number of layers output by the outer
-network) prevented a vanishing gradient.
-\section{Classification}
-\subsection{Miniimagenet}
-\subsection{Omniglot}
+Meta-learning performance is evaluted for a task held out at the start of training. 
+REML is asked to construct an $N$ for this unseen task. Sample efficiency is evaluated
+comparing training performance over 100 gradient steps for an $N$ from REML and a 
+baseline network trained from scratch. The layers in the baseline network are likewise
+initialized with the Xavier transform like the layers in $\mathcal{L}$. Few-shot 
+learning is evaluated using $k=5$ and $k=10$ sample datapoints in continuation with 
+the protocol proposed by Finn et al.
+
+
+\begin{figure}[htbp]  % Placement options: h (here), t (top), b (bottom), p (page of floats)
+    \centering
+    \includegraphics[width=1.0\textwidth]{RecurrentPPO_1220_16-59/loss_versus_step_training_.png}  % Adjust width as needed
+    \caption{This is a comprehensive caption describing the key aspects of the figure. It should convey essential information for understanding the visual content.}
+    % \label{fig:A} 
+\end{figure}
+\begin{figure}[htbp]  % Placement options: h (here), t (top), b (bottom), p (page of floats)
+    \centering
+    \includegraphics[width=1.0\textwidth]{RecurrentPPO_1220_16-59/loss_versus_step_eval_.png}  % Adjust width as needed
+    \caption{This is a comprehensive caption describing the key aspects of the figure. It should convey essential information for understanding the visual content.}
+    % \label{fig:B} 
+\end{figure}
+
+
+
 
 \minitoc 

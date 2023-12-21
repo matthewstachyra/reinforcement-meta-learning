@@ -13,24 +13,29 @@
 \usepackage{mathtools}
 \usepackage{algorithm}
 \usepackage{algpseudocode}
-
+\usepackage{subcaption}
+\usepackage[labelformat=parens,labelsep=quad, skip=3pt]{caption}
 
 \DeclareMathOperator{\diag}{diag}
 \DeclareMathOperator{\vect}{vec}
 \newcommand{\R}{\mathbb R}
 \DeclarePairedDelimiter{\norm}{\lVert}{\rVert}
+\renewcommand\figurename{\textit{Figure}} 
+\graphicspath{{C:/Users/stach/Documents/reinforcement-meta-learning/src/discrete/slurm}}
+
 
 
 \begin{document}
 
+
 \title{
-  {\Large \textbf{Reinforcement Meta Learning}}\\
-  \vspace{3cm}
+  {\Large \textbf{Learning to learn by gradient descent as a discrete-time finite-horizon MDP}}\\
+  \vspace{2cm}
   {\normalsize A thesis submitted by}\\
   {\large Matthew Stachyra}\\
   {\normalsize in partial fulfillment of the requirements for the degree of}\\
   {\normalsize Master of Science in Computer Science}\\
-  \vspace{4cm}
+  \vspace{2cm}
   {\normalsize Tufts University}\\
   {\normalsize December 2023}\\
   {\normalsize Advisor: Jivko Sinapov}
@@ -46,22 +51,13 @@
 \input{chapters/Background}
 \input{chapters/Method}
 \input{chapters/Evaluation}
-
 \input{chapters/Discussion}
-% EDIT THE CONTENT OF THE FILE
-% Conclusions.tex
-% You can find it under the folder 
-% "chapters" on the left column
-
 % APPENDICES ARE OPTIONAL
 % COMMENT OUT BOTH LINES BELOW TO REMOVE THEM
 % ADD CHAPTERS TO ADD MULTIPLE APPENDICES
-\appendix 
-\input{chapters/AppendixA.tex}
-%\input{AppendixB.tex} % Example second appendix (need to create the file in "chapters")
 
 
-\cleardoublepage % Do not change - required
-\printbibliography[title={Bibliography},heading=bibintoc] % Dbibliography
+\cleardoublepage 
+\printbibliography[title={Bibliography},heading=bibintoc]
 
 \end{document}
