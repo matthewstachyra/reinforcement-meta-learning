@@ -1,0 +1,112 @@
+wandb_version: 1
+
+seed:
+  desc: null
+  value: 41
+device:
+  desc: null
+  value: cuda
+wandb_tag:
+  desc: null
+  value: tuning_1224_0952
+run_datetime:
+  desc: null
+  value: '1224_0952'
+exp_file:
+  desc: null
+  value: ''
+n_runs:
+  desc: null
+  value: 1
+epochs:
+  desc: null
+  value: 3
+timesteps:
+  desc: null
+  value: 50
+n_x:
+  desc: null
+  value: 100
+n_tasks:
+  desc: null
+  value: 3
+task_min_loss:
+  desc: null
+  value: {}
+task_max_loss:
+  desc: null
+  value: {}
+in_features:
+  desc: null
+  value: 1
+out_features:
+  desc: null
+  value: 1
+n_pool_hidden_layers:
+  desc: null
+  value: 9
+n_hidden_layers_per_network:
+  desc: null
+  value: 3
+n_layers_per_network:
+  desc: null
+  value: 5
+n_nodes_per_layer:
+  desc: null
+  value: 40
+pool_layer_type:
+  desc: null
+  value: torch.nn.modules.linear.Linear
+batch_size:
+  desc: null
+  value: 64
+learning_rate:
+  desc: null
+  value: 0.01
+meta_learning_rate:
+  desc: null
+  value: 0.0003
+meta_clip_range:
+  desc: null
+  value: 0.2
+meta_n_steps:
+  desc: null
+  value: 2048
+loss_fn:
+  desc: null
+  value: MSELoss()
+sb3_model:
+  desc: null
+  value: PPO
+data_dir:
+  desc: null
+  value: data
+_wandb:
+  desc: null
+  value:
+    python_version: 3.11.5
+    cli_version: 0.15.12
+    framework: torch
+    is_jupyter_run: false
+    is_kaggle_kernel: false
+    start_time: 1703429573.810241
+    t:
+      1:
+      - 1
+      - 2
+      - 3
+      - 55
+      2:
+      - 1
+      - 2
+      - 3
+      - 55
+      3:
+      - 13
+      - 16
+      - 23
+      4: 3.11.5
+      5: 0.15.12
+      8:
+      - 5
+      13: linux-x86_64

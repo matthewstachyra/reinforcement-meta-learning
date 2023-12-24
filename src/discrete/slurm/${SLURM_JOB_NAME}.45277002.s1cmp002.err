@@ -1,0 +1,271 @@
+wandb: Appending key for api.wandb.ai to your netrc file: /cluster/home/mstach01/.netrc
+2023-12-23 23:16:22.870987: I tensorflow/core/platform/cpu_feature_guard.cc:182] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: SSE4.1 SSE4.2 AVX AVX2 AVX512F AVX512_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+wandb: Currently logged in as: mattstachyra. Use `wandb login --relogin` to force relogin
+wandb: - Waiting for wandb.init()...wandb: \ Waiting for wandb.init()...wandb: | Waiting for wandb.init()...wandb: wandb version 0.16.1 is available!  To upgrade, please run:
+wandb:  $ pip install wandb --upgrade
+wandb: Tracking run with wandb version 0.15.12
+wandb: Run data is saved locally in /cluster/home/mstach01/code/reinforcement-meta-learning/src/discrete/wandb/run-20231223_231629-zihxh21g
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run tuning_1223_2316
+wandb: ⭐️ View project at https://wandb.ai/mattstachyra/reinforcement-meta-learning
+wandb: 🚀 View run at https://wandb.ai/mattstachyra/reinforcement-meta-learning/runs/zihxh21g
+/cluster/home/mstach01/code/reinforcement-meta-learning/src/discrete/disc-episode-adding-layers.py:93: FutureWarning: The input object of type 'Tensor' is an array-like implementing one of the corresponding protocols (`__array__`, `__array_interface__` or `__array_struct__`); but not a sequence (or 0-D). In the future, this object will be coerced as if it was first converted using `np.array(obj)`. To retain the old behaviour, you have to either modify the type 'Tensor', or assign to an empty array created with `np.empty(correct_shape, dtype=object)`.
+  tasks_targets = torch.tensor(np.array([
+/cluster/home/mstach01/code/reinforcement-meta-learning/src/discrete/disc-episode-adding-layers.py:93: VisibleDeprecationWarning: Creating an ndarray from ragged nested sequences (which is a list-or-tuple of lists-or-tuples-or ndarrays with different lengths or shapes) is deprecated. If you meant to do this, you must specify 'dtype=object' when creating the ndarray.
+  tasks_targets = torch.tensor(np.array([
+wandb: Network error (ReadTimeout), entering retry loop.
+/cluster/home/mstach01/condaenv/mthesis/lib/python3.11/site-packages/stable_baselines3/ppo/ppo.py:148: UserWarning: You have specified a mini-batch size of 64, but because the `RolloutBuffer` is of size `n_steps * n_envs = 5`, after every 0 untruncated mini-batches, there will be a truncated mini-batch of size 5
+We recommend using a `batch_size` that is a factor of `n_steps * n_envs`.
+Info: (n_steps=5 and n_envs=1)
+  warnings.warn(
+wandb: Waiting for W&B process to finish... (success).
+wandb: - 0.014 MB of 0.014 MB uploaded (0.000 MB deduped)wandb: \ 0.014 MB of 0.049 MB uploaded (0.000 MB deduped)wandb: | 0.025 MB of 0.094 MB uploaded (0.000 MB deduped)wandb: 
+wandb: Run history:
+wandb:                  cumulative_loss_run{'meta_clip_range': 0.1, 'sb3_model': 'PPO'}_task0_per_epoch █▂▅▁▂▂▃▁▂▁▅▅▁▂▅▂▁▁▄▃
+wandb:                  cumulative_loss_run{'meta_clip_range': 0.1, 'sb3_model': 'PPO'}_task1_per_epoch ▂▁▁▂▁▂▁▁▁▁▁▁▁▂▁▁▁▁█▁
+wandb:         cumulative_loss_run{'meta_clip_range': 0.1, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch ▇▄▂▇▅█▆▂▂▂▂▂▄▄▁▃▂▄▂▃
+wandb:         cumulative_loss_run{'meta_clip_range': 0.1, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch ▂▆▃▁▄█▁▄▁▁▁▁▃▁▂▁▁▁▁▃
+wandb:                  cumulative_loss_run{'meta_clip_range': 0.2, 'sb3_model': 'PPO'}_task0_per_epoch █▂▁▆▂▃▂▇▁▅▆▁█▁▄▂▅▅▁▂
+wandb:                  cumulative_loss_run{'meta_clip_range': 0.2, 'sb3_model': 'PPO'}_task1_per_epoch ▃▁▃▂▃▁▁▁▁▁▃█▃▁▁▃▁▁▁▂
+wandb:         cumulative_loss_run{'meta_clip_range': 0.2, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch ▄▃▂▄▃██▄▆▆▂▁▁▃▁▅▃▂▁▂
+wandb:         cumulative_loss_run{'meta_clip_range': 0.2, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch ▁▁▁▂▄▁▃█▃▁▁▁▁▁▃▁▁▁▁▁
+wandb:                  cumulative_loss_run{'meta_clip_range': 0.3, 'sb3_model': 'PPO'}_task0_per_epoch ▃▂▂▂▁▂▁▅▂▁▁▃▅▂▁█▃▁██
+wandb:                  cumulative_loss_run{'meta_clip_range': 0.3, 'sb3_model': 'PPO'}_task1_per_epoch ▁▂▃▂▁▁▁▅▃▂▃▄▄▁▂▂▂█▂▃
+wandb:         cumulative_loss_run{'meta_clip_range': 0.3, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch ▁▁▁▁▁▁▁▁▁▁▁█▁▁▁▁▁▁▁▁
+wandb:         cumulative_loss_run{'meta_clip_range': 0.3, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch ▁▁▁▁▆▁▃▁▁▃█▁▂▁▁▁▁▁▁▁
+wandb:            cumulative_loss_run{'meta_learning_rate': 0.0003, 'sb3_model': 'PPO'}_task0_per_epoch ▃▂▂▃▆▃▂▃▄▂▂▅▁▂▂▃▁▁▁█
+wandb:            cumulative_loss_run{'meta_learning_rate': 0.0003, 'sb3_model': 'PPO'}_task1_per_epoch ▁▂▁▃█▂▁▂▁▁▁▂▁▁▁▁▄▁▃▁
+wandb:   cumulative_loss_run{'meta_learning_rate': 0.0003, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch ▁▁▁▁▁▁▁▂▁▁▁▁█▁▁▂▂▁▁▁
+wandb:   cumulative_loss_run{'meta_learning_rate': 0.0003, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch ▁▁▁▁▁▂▁▁▁▁▁▁▁▁▁▁▁▁▁█
+wandb:             cumulative_loss_run{'meta_learning_rate': 0.001, 'sb3_model': 'PPO'}_task0_per_epoch ▁▁▂▁▁▁▃▁▄█▁▁▂▂▂▁▁▁▁▂
+wandb:             cumulative_loss_run{'meta_learning_rate': 0.001, 'sb3_model': 'PPO'}_task1_per_epoch ▂▁▇▁▃▁▁▁▂▃▁▁█▂▃▁▁▁▄▃
+wandb:    cumulative_loss_run{'meta_learning_rate': 0.001, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch ▄▁▃▁▄█▂▃▁▁▃▁▄▂▃▄▁▃▃▃
+wandb:    cumulative_loss_run{'meta_learning_rate': 0.001, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch ▄█▁▃▃▃▆▃▁▁▁▂▂▂▁▂▂▁▁▁
+wandb:              cumulative_loss_run{'meta_learning_rate': 0.01, 'sb3_model': 'PPO'}_task0_per_epoch ▁▁▁▁▁▁▁▁▁▁▁▁▁▂█▁▁▁▁▁
+wandb:              cumulative_loss_run{'meta_learning_rate': 0.01, 'sb3_model': 'PPO'}_task1_per_epoch ▁▁▁▁▁▁▁▁▁▁▁▁▁█▁▁▁▁▁▁
+wandb:     cumulative_loss_run{'meta_learning_rate': 0.01, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch ▁▁▁▁▁▁▁▁▁▁▁▁▂▃▆██▄▄▄
+wandb:     cumulative_loss_run{'meta_learning_rate': 0.01, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch ▁▁▁▁▁▁▁▁▁▁▁▁▂▂▃█▁▇▁▁
+wandb:                     cumulative_loss_run{'meta_n_steps': 128, 'sb3_model': 'PPO'}_task0_per_epoch ▁▇▂▁▅▅█▁▄▄▃▂▂▃▅▁▂▂▁▂
+wandb:                     cumulative_loss_run{'meta_n_steps': 128, 'sb3_model': 'PPO'}_task1_per_epoch █▆▁▁▁▁▁▁▁▁▁▄▁▄▃▄▁▁▂▁
+wandb:            cumulative_loss_run{'meta_n_steps': 128, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch ▂▅█▁▁▄▄▂▁▇▄▄▁▇▁▅▃▃▃▃
+wandb:            cumulative_loss_run{'meta_n_steps': 128, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch ▃▁▂▂▁▁▁▂▃▃▄▄▇█▁▁▁▁▂▁
+wandb:                    cumulative_loss_run{'meta_n_steps': 2048, 'sb3_model': 'PPO'}_task0_per_epoch ▂▃▂▁▄▃▅▁▁▃▁▁▁▃█▂▁▃▁▃
+wandb:                    cumulative_loss_run{'meta_n_steps': 2048, 'sb3_model': 'PPO'}_task1_per_epoch ▂▁▁▅▁▂▁▂▂▂▁█▁▂▂▁▁▁▁▅
+wandb:           cumulative_loss_run{'meta_n_steps': 2048, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch ▁▃▁▁▁█▁▁▂▂▃▁▂▁▁▁▁▁▁▁
+wandb:           cumulative_loss_run{'meta_n_steps': 2048, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch ▂▁▁▂█▂▁▂▅▄▁▁▁▁▁▁▁▁▁▁
+wandb:                       cumulative_loss_run{'meta_n_steps': 5, 'sb3_model': 'PPO'}_task0_per_epoch ▁▁▁▁▁▁▁▁▁▁▁▅▁▁▁▁▁█▁▁
+wandb:                       cumulative_loss_run{'meta_n_steps': 5, 'sb3_model': 'PPO'}_task1_per_epoch ▁▁▁▁▁▁▁▁▁▁▁▁▁▁█▁▁▁▁▁
+wandb:              cumulative_loss_run{'meta_n_steps': 5, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch ▃▂▂▂▂▂▂▆▂▆▆▁▁▁▇▁▁▅▃█
+wandb:              cumulative_loss_run{'meta_n_steps': 5, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch ▂▂▂▂▁▁▁▆▃▃▅█▅▁▁▅▁▅▁▁
+wandb:                     cumulative_loss_run{'meta_n_steps': 512, 'sb3_model': 'PPO'}_task0_per_epoch ▄▄▁▅▂▂▁▅▅▃▃█▁▁▁▁▄▂▁▁
+wandb:                     cumulative_loss_run{'meta_n_steps': 512, 'sb3_model': 'PPO'}_task1_per_epoch ▁▂█▁▁▁▅▁▁▂▁▁▁▁▃▁▂▆▁▁
+wandb:            cumulative_loss_run{'meta_n_steps': 512, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch ▁▁▁▁▂▁▄▂▂▂▃▂▂▁▃▆█▂▂▂
+wandb:            cumulative_loss_run{'meta_n_steps': 512, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch ▁▁▆▁▂▃▂▂▄▄▃▃█▃▁▅▄▁▁▁
+wandb:                cumulative_reward_run{'meta_clip_range': 0.1, 'sb3_model': 'PPO'}_task0_per_epoch ▁▄▅▆▄▆▄█▄█▄▄█▆▅▆██▄▁
+wandb:                cumulative_reward_run{'meta_clip_range': 0.1, 'sb3_model': 'PPO'}_task1_per_epoch ▃▅▅▆▁▁▃▃▃▇▃▅▅▄▁▅▇▃█▃
+wandb:       cumulative_reward_run{'meta_clip_range': 0.1, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch ▁▅▄▆▇▇█▆▆▆▆▆▆▆▆▆▆▆▆▆
+wandb:       cumulative_reward_run{'meta_clip_range': 0.1, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch ▁▁▆▆▁█▆▆▆▆▆▆▆▆▆▆▆▆▆▆
+wandb:                cumulative_reward_run{'meta_clip_range': 0.2, 'sb3_model': 'PPO'}_task0_per_epoch ▅▁█▂▅▁▅▁█▂▃█▃█▃▅▃▂█▅
+wandb:                cumulative_reward_run{'meta_clip_range': 0.2, 'sb3_model': 'PPO'}_task1_per_epoch ▁▆▃▃▃███▃▆▃▄▃██▄▆▆▆▃
+wandb:       cumulative_reward_run{'meta_clip_range': 0.2, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch ▁▂▃▃▃▃▆▄▆█▃▂▂▃▂▃▃▂▂▂
+wandb:       cumulative_reward_run{'meta_clip_range': 0.2, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch ▁▂▂▂▃▂▅█▃▂▂▂▂▂▂▂▂▂▂▂
+wandb:                cumulative_reward_run{'meta_clip_range': 0.3, 'sb3_model': 'PPO'}_task0_per_epoch ▁▃▁▁▄▁▄▁▁▄▄▁▁▁▄█▁▄▁▂
+wandb:                cumulative_reward_run{'meta_clip_range': 0.3, 'sb3_model': 'PPO'}_task1_per_epoch █▃▃▃██▆▃▃▃▄▄▃▆▁▃▃▃▃▃
+wandb:       cumulative_reward_run{'meta_clip_range': 0.3, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch ▁▁▁▁▁▁▁▁▁▁▁█▂▁▁▁▁▁▁▁
+wandb:       cumulative_reward_run{'meta_clip_range': 0.3, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch ▁▁▁▂▄▁▂▁▁▄█▂▁▁▁▁▁▁▁▁
+wandb:          cumulative_reward_run{'meta_learning_rate': 0.0003, 'sb3_model': 'PPO'}_task0_per_epoch ▃▁▁▁▂▁▁▁▂▃▁▂▃▁▁▁▄▃▄█
+wandb:          cumulative_reward_run{'meta_learning_rate': 0.0003, 'sb3_model': 'PPO'}_task1_per_epoch █▅█▁▁▁█▁███▁▅███▁▁▁▅
+wandb: cumulative_reward_run{'meta_learning_rate': 0.0003, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch ▁▁▁▁▁▁▁▁▁▁▁▁█▂▁▂▁▁▁▁
+wandb: cumulative_reward_run{'meta_learning_rate': 0.0003, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁█
+wandb:           cumulative_reward_run{'meta_learning_rate': 0.001, 'sb3_model': 'PPO'}_task0_per_epoch ▂▄▂▂▂▃▃▂▄█▂▄▂▂▂▃▃▃▁▃
+wandb:           cumulative_reward_run{'meta_learning_rate': 0.001, 'sb3_model': 'PPO'}_task1_per_epoch ▃▇▇▁▁▅▅▃▁▃▅▇▃▃▃▇▃▅▃█
+wandb:  cumulative_reward_run{'meta_learning_rate': 0.001, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch ▃▂▂▃▃▇▃█▃▃▃▃▁▃▃▂▃▃▃▃
+wandb:  cumulative_reward_run{'meta_learning_rate': 0.001, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch ▁▅▅▆▆██▆▅▅▅▅▅▅▅▅▅▅▅▅
+wandb:            cumulative_reward_run{'meta_learning_rate': 0.01, 'sb3_model': 'PPO'}_task0_per_epoch ▇██▇██▇█▇█▇██▁██▇███
+wandb:            cumulative_reward_run{'meta_learning_rate': 0.01, 'sb3_model': 'PPO'}_task1_per_epoch █████▇███████▁▇█████
+wandb:   cumulative_reward_run{'meta_learning_rate': 0.01, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch ████████████▇▆▁▁▁▁▁▁
+wandb:   cumulative_reward_run{'meta_learning_rate': 0.01, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch ████████████▇▁▁▁▁▁▁▁
+wandb:                   cumulative_reward_run{'meta_n_steps': 128, 'sb3_model': 'PPO'}_task0_per_epoch █▁▅▆▆▄▆█▅▅▃▅▅▅▃█▅▆▆▅
+wandb:                   cumulative_reward_run{'meta_n_steps': 128, 'sb3_model': 'PPO'}_task1_per_epoch ▇▁███▁██▁█▅▁▁▁▁▁▅█▁▁
+wandb:          cumulative_reward_run{'meta_n_steps': 128, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch ▅▃▁▆▆▆▆▆▆▆▆▆▆█▆▅▆▆▆▆
+wandb:          cumulative_reward_run{'meta_n_steps': 128, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch ▄▁▇▇▇▇▇▇██▅█▇▁▇▇▄▇▇▇
+wandb:                  cumulative_reward_run{'meta_n_steps': 2048, 'sb3_model': 'PPO'}_task0_per_epoch ▁▁▁▃▃▁▂▃▂▁▂▂▂▁█▁▃▂▂▂
+wandb:                  cumulative_reward_run{'meta_n_steps': 2048, 'sb3_model': 'PPO'}_task1_per_epoch ▂▂▂▂▃▂▃▂▂▃▁▃▂▂▂▄▄▂▄█
+wandb:         cumulative_reward_run{'meta_n_steps': 2048, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch ▁▁▁▂▂█▂▂▂▄▂▂▂▂▂▂▂▂▂▂
+wandb:         cumulative_reward_run{'meta_n_steps': 2048, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch ▁▄▄▄█▄▄▄▅▅▄▄▄▄▄▄▄▄▄▄
+wandb:                     cumulative_reward_run{'meta_n_steps': 5, 'sb3_model': 'PPO'}_task0_per_epoch ███████████▄█████▁██
+wandb:                     cumulative_reward_run{'meta_n_steps': 5, 'sb3_model': 'PPO'}_task1_per_epoch ███████████▆██▁▆████
+wandb:            cumulative_reward_run{'meta_n_steps': 5, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch ▃▃▃▃▃▃▃▃▃▃▄▃▃▃▁▃▃▂▃█
+wandb:            cumulative_reward_run{'meta_n_steps': 5, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch ▁▁▅▅▅▅▅▃▄▁▄█▅▅▅▄▅▄▅▅
+wandb:                   cumulative_reward_run{'meta_n_steps': 512, 'sb3_model': 'PPO'}_task0_per_epoch ▁▅▇▇▅██▇▆▆▆▅████▆▆▇▇
+wandb:                   cumulative_reward_run{'meta_n_steps': 512, 'sb3_model': 'PPO'}_task1_per_epoch ▆█▁█▆█▃█▆▅██▆▅▅▅▅▅█▅
+wandb:          cumulative_reward_run{'meta_n_steps': 512, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch ▁▁▆▆▁▆▅▁▆▆▆▆▇▆▁▅█▆▆▆
+wandb:          cumulative_reward_run{'meta_n_steps': 512, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch ▆█▁▃██▅███▆█████████
+wandb:                           errors_run{'meta_clip_range': 0.1, 'sb3_model': 'PPO'}_task0_per_epoch █▅▄▂▂▂▁▂▁▁▁▁▂▁▁▁▁▁▁▁
+wandb:                           errors_run{'meta_clip_range': 0.1, 'sb3_model': 'PPO'}_task1_per_epoch █▆▄▂▂▂▂▂▂▂▂▂▂▂▁▁▂▂▁▁
+wandb:                  errors_run{'meta_clip_range': 0.1, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch █▇▆▅▄▃▂▂▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:                  errors_run{'meta_clip_range': 0.1, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch █▇▆▅▄▃▂▂▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:                           errors_run{'meta_clip_range': 0.2, 'sb3_model': 'PPO'}_task0_per_epoch █▄▃▃▂▁▂▂▂▂▂▁▂▂▁▁▁▂▂▂
+wandb:                           errors_run{'meta_clip_range': 0.2, 'sb3_model': 'PPO'}_task1_per_epoch █▂▃▂▃▂▂▂▂▁▁▂▁▂▁▂▂▂▁▂
+wandb:                  errors_run{'meta_clip_range': 0.2, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch █▇▅▃▂▂▁▂▂▂▁▂▁▁▁▁▂▁▁▁
+wandb:                  errors_run{'meta_clip_range': 0.2, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch █▆▄▂▂▁▁▁▂▁▁▁▁▁▁▁▁▁▁▁
+wandb:                           errors_run{'meta_clip_range': 0.3, 'sb3_model': 'PPO'}_task0_per_epoch █▃▂▂▂▂▁▁▁▁▁▁▁▁▂▁▁▁▁▁
+wandb:                           errors_run{'meta_clip_range': 0.3, 'sb3_model': 'PPO'}_task1_per_epoch █▅▂▂▂▂▁▂▁▁▁▁▁▁▁▂▁▂▂▂
+wandb:                  errors_run{'meta_clip_range': 0.3, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch █▆▃▂▂▂▂▂▂▁▂▂▄▃▁▁▁▁▂▁
+wandb:                  errors_run{'meta_clip_range': 0.3, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch █▅▃▂▂▂▂▁▂▂▂▃▅▂▁▁▁▃▁▄
+wandb:                     errors_run{'meta_learning_rate': 0.0003, 'sb3_model': 'PPO'}_task0_per_epoch █▃▂▂▂▁▁▂▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:                     errors_run{'meta_learning_rate': 0.0003, 'sb3_model': 'PPO'}_task1_per_epoch █▄▃▃▂▂▁▁▁▂▂▂▂▁▁▁▁▁▁▁
+wandb:            errors_run{'meta_learning_rate': 0.0003, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch █▇▅▂▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:            errors_run{'meta_learning_rate': 0.0003, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch █▆▄▂▂▁▁▂▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:                      errors_run{'meta_learning_rate': 0.001, 'sb3_model': 'PPO'}_task0_per_epoch █▄▄▄▄▂▂▄▃▄▂▃▃▂▃▂▃▁▂▃
+wandb:                      errors_run{'meta_learning_rate': 0.001, 'sb3_model': 'PPO'}_task1_per_epoch █▄▃▃▃▃▂▃▃▃▃▃▃▂▂▂▃▂▂▁
+wandb:             errors_run{'meta_learning_rate': 0.001, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch █▆▄▁▁▁▁▁▁▁▁▁▁▁▁▃▁▂▁▁
+wandb:             errors_run{'meta_learning_rate': 0.001, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch █▅▃▂▂▁▁▁▁▁▁▁▁▁▁▂▁▁▁▁
+wandb:                       errors_run{'meta_learning_rate': 0.01, 'sb3_model': 'PPO'}_task0_per_epoch ▂▂▂▅▂▁▂▁▁▂▁▃▂█▇▅▂▁▂▂
+wandb:                       errors_run{'meta_learning_rate': 0.01, 'sb3_model': 'PPO'}_task1_per_epoch ▃▁▁▂▂▅▁▁▅▁▁▁▁█▅▄▁▂▁▁
+wandb:              errors_run{'meta_learning_rate': 0.01, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch ▃▁▁▁▂▂▃▂▂▁▂▁████████
+wandb:              errors_run{'meta_learning_rate': 0.01, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch ▂▄▂▁▃▃▃▃▂▂▂▂████████
+wandb:                              errors_run{'meta_n_steps': 128, 'sb3_model': 'PPO'}_task0_per_epoch █▄▄▁▃▁▃▃▂▂▁▂▂▁▁▁▁▂▁▂
+wandb:                              errors_run{'meta_n_steps': 128, 'sb3_model': 'PPO'}_task1_per_epoch █▄▃▂▂▂▂▁▂▁▁▁▁▁▁▁▁▁▁▁
+wandb:                     errors_run{'meta_n_steps': 128, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch █▆▅▃▂▂▁▂▂▂▂▁▁▁▁▂▂▂▂▁
+wandb:                     errors_run{'meta_n_steps': 128, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch █▆▅▃▂▂▂▂▂▂▁▂▂▂▃▁▂▁▂▂
+wandb:                             errors_run{'meta_n_steps': 2048, 'sb3_model': 'PPO'}_task0_per_epoch █▄▃▂▁▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:                             errors_run{'meta_n_steps': 2048, 'sb3_model': 'PPO'}_task1_per_epoch █▃▃▂▂▂▁▂▂▂▂▁▁▁▂▂▁▁▁▁
+wandb:                    errors_run{'meta_n_steps': 2048, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch █▆▅▃▂▂▁▁▁▁▁▁▁▁▁▁▁▃▁▁
+wandb:                    errors_run{'meta_n_steps': 2048, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch █▇▄▂▂▂▂▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:                                errors_run{'meta_n_steps': 5, 'sb3_model': 'PPO'}_task0_per_epoch ▄▃▃▃▃▃▃▂▁▁▁▆▁▁▁█▅▅▂▁
+wandb:                                errors_run{'meta_n_steps': 5, 'sb3_model': 'PPO'}_task1_per_epoch ▃▃▃▃▃▃▃▂▁▁▁▂▁▁█▅▄▅▁▃
+wandb:                       errors_run{'meta_n_steps': 5, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch ▆▅▄▃▄▄▄▄▄▅█▆▂▁▁▁▁▁▁▁
+wandb:                       errors_run{'meta_n_steps': 5, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch ▅▄▃▃▄▃▃▄▃▅█▃▂▂▁▁▁▁▁▁
+wandb:                              errors_run{'meta_n_steps': 512, 'sb3_model': 'PPO'}_task0_per_epoch █▅▄▃▂▂▂▂▂▂▁▂▂▁▂▂▂▂▁▂
+wandb:                              errors_run{'meta_n_steps': 512, 'sb3_model': 'PPO'}_task1_per_epoch █▅▃▂▃▂▂▁▂▂▂▁▁▁▂▂▂▁▁▁
+wandb:                     errors_run{'meta_n_steps': 512, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch █▇▆▅▅▄▃▃▂▂▁▁▁▁▁▁▁▁▁▁
+wandb:                     errors_run{'meta_n_steps': 512, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch █▇▇▆▅▄▃▃▂▂▂▂▂▂▁▁▁▂▁▁
+wandb: 
+wandb: Run summary:
+wandb:                  cumulative_loss_run{'meta_clip_range': 0.1, 'sb3_model': 'PPO'}_task0_per_epoch 22.62122
+wandb:                  cumulative_loss_run{'meta_clip_range': 0.1, 'sb3_model': 'PPO'}_task1_per_epoch 1.46602
+wandb:         cumulative_loss_run{'meta_clip_range': 0.1, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch 24.12196
+wandb:         cumulative_loss_run{'meta_clip_range': 0.1, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch 3.22911
+wandb:                  cumulative_loss_run{'meta_clip_range': 0.2, 'sb3_model': 'PPO'}_task0_per_epoch 6.1959
+wandb:                  cumulative_loss_run{'meta_clip_range': 0.2, 'sb3_model': 'PPO'}_task1_per_epoch 2.49357
+wandb:         cumulative_loss_run{'meta_clip_range': 0.2, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch 16.85094
+wandb:         cumulative_loss_run{'meta_clip_range': 0.2, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch 0.7554
+wandb:                  cumulative_loss_run{'meta_clip_range': 0.3, 'sb3_model': 'PPO'}_task0_per_epoch 62.75401
+wandb:                  cumulative_loss_run{'meta_clip_range': 0.3, 'sb3_model': 'PPO'}_task1_per_epoch 2.93234
+wandb:         cumulative_loss_run{'meta_clip_range': 0.3, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch 23.74599
+wandb:         cumulative_loss_run{'meta_clip_range': 0.3, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch 2.37521
+wandb:            cumulative_loss_run{'meta_learning_rate': 0.0003, 'sb3_model': 'PPO'}_task0_per_epoch 90.30626
+wandb:            cumulative_loss_run{'meta_learning_rate': 0.0003, 'sb3_model': 'PPO'}_task1_per_epoch 0.24599
+wandb:   cumulative_loss_run{'meta_learning_rate': 0.0003, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch 0
+wandb:   cumulative_loss_run{'meta_learning_rate': 0.0003, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch 660.18556
+wandb:             cumulative_loss_run{'meta_learning_rate': 0.001, 'sb3_model': 'PPO'}_task0_per_epoch 21.54909
+wandb:             cumulative_loss_run{'meta_learning_rate': 0.001, 'sb3_model': 'PPO'}_task1_per_epoch 8.36141
+wandb:    cumulative_loss_run{'meta_learning_rate': 0.001, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch 23.93883
+wandb:    cumulative_loss_run{'meta_learning_rate': 0.001, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch 0
+wandb:              cumulative_loss_run{'meta_learning_rate': 0.01, 'sb3_model': 'PPO'}_task0_per_epoch 0
+wandb:              cumulative_loss_run{'meta_learning_rate': 0.01, 'sb3_model': 'PPO'}_task1_per_epoch 0.92798
+wandb:     cumulative_loss_run{'meta_learning_rate': 0.01, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch 18367.49403
+wandb:     cumulative_loss_run{'meta_learning_rate': 0.01, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch 1983.28612
+wandb:                     cumulative_loss_run{'meta_n_steps': 128, 'sb3_model': 'PPO'}_task0_per_epoch 10.39365
+wandb:                     cumulative_loss_run{'meta_n_steps': 128, 'sb3_model': 'PPO'}_task1_per_epoch 0.50491
+wandb:            cumulative_loss_run{'meta_n_steps': 128, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch 31.55154
+wandb:            cumulative_loss_run{'meta_n_steps': 128, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch 2.42344
+wandb:                    cumulative_loss_run{'meta_n_steps': 2048, 'sb3_model': 'PPO'}_task0_per_epoch 29.89758
+wandb:                    cumulative_loss_run{'meta_n_steps': 2048, 'sb3_model': 'PPO'}_task1_per_epoch 14.95639
+wandb:           cumulative_loss_run{'meta_n_steps': 2048, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch 24.2458
+wandb:           cumulative_loss_run{'meta_n_steps': 2048, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch 3.23405
+wandb:                       cumulative_loss_run{'meta_n_steps': 5, 'sb3_model': 'PPO'}_task0_per_epoch 0
+wandb:                       cumulative_loss_run{'meta_n_steps': 5, 'sb3_model': 'PPO'}_task1_per_epoch 3.39674
+wandb:              cumulative_loss_run{'meta_n_steps': 5, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch 81.79856
+wandb:              cumulative_loss_run{'meta_n_steps': 5, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch 0
+wandb:                     cumulative_loss_run{'meta_n_steps': 512, 'sb3_model': 'PPO'}_task0_per_epoch 4.46226
+wandb:                     cumulative_loss_run{'meta_n_steps': 512, 'sb3_model': 'PPO'}_task1_per_epoch 0.52467
+wandb:            cumulative_loss_run{'meta_n_steps': 512, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch 16.40731
+wandb:            cumulative_loss_run{'meta_n_steps': 512, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch 0
+wandb:                cumulative_reward_run{'meta_clip_range': 0.1, 'sb3_model': 'PPO'}_task0_per_epoch -3
+wandb:                cumulative_reward_run{'meta_clip_range': 0.1, 'sb3_model': 'PPO'}_task1_per_epoch -2
+wandb:       cumulative_reward_run{'meta_clip_range': 0.1, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch -0.20671
+wandb:       cumulative_reward_run{'meta_clip_range': 0.1, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch -0.05005
+wandb:                cumulative_reward_run{'meta_clip_range': 0.2, 'sb3_model': 'PPO'}_task0_per_epoch -1
+wandb:                cumulative_reward_run{'meta_clip_range': 0.2, 'sb3_model': 'PPO'}_task1_per_epoch -1.95181
+wandb:       cumulative_reward_run{'meta_clip_range': 0.2, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch -0.1399
+wandb:       cumulative_reward_run{'meta_clip_range': 0.2, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch 0.00367
+wandb:                cumulative_reward_run{'meta_clip_range': 0.3, 'sb3_model': 'PPO'}_task0_per_epoch -1.71674
+wandb:                cumulative_reward_run{'meta_clip_range': 0.3, 'sb3_model': 'PPO'}_task1_per_epoch -1.978
+wandb:       cumulative_reward_run{'meta_clip_range': 0.3, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch -0.18893
+wandb:       cumulative_reward_run{'meta_clip_range': 0.3, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch -1.02362
+wandb:          cumulative_reward_run{'meta_learning_rate': 0.0003, 'sb3_model': 'PPO'}_task0_per_epoch 2.33641
+wandb:          cumulative_reward_run{'meta_learning_rate': 0.0003, 'sb3_model': 'PPO'}_task1_per_epoch -1
+wandb: cumulative_reward_run{'meta_learning_rate': 0.0003, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch 0
+wandb: cumulative_reward_run{'meta_learning_rate': 0.0003, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch 191.42946
+wandb:           cumulative_reward_run{'meta_learning_rate': 0.001, 'sb3_model': 'PPO'}_task0_per_epoch -0.62121
+wandb:           cumulative_reward_run{'meta_learning_rate': 0.001, 'sb3_model': 'PPO'}_task1_per_epoch 0.4451
+wandb:  cumulative_reward_run{'meta_learning_rate': 0.001, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch -0.2288
+wandb:  cumulative_reward_run{'meta_learning_rate': 0.001, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch 0
+wandb:            cumulative_reward_run{'meta_learning_rate': 0.01, 'sb3_model': 'PPO'}_task0_per_epoch 0
+wandb:            cumulative_reward_run{'meta_learning_rate': 0.01, 'sb3_model': 'PPO'}_task1_per_epoch -2
+wandb:   cumulative_reward_run{'meta_learning_rate': 0.01, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch -2047.08752
+wandb:   cumulative_reward_run{'meta_learning_rate': 0.01, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch -2047.01643
+wandb:                   cumulative_reward_run{'meta_n_steps': 128, 'sb3_model': 'PPO'}_task0_per_epoch -2
+wandb:                   cumulative_reward_run{'meta_n_steps': 128, 'sb3_model': 'PPO'}_task1_per_epoch -2
+wandb:          cumulative_reward_run{'meta_n_steps': 128, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch -0.25009
+wandb:          cumulative_reward_run{'meta_n_steps': 128, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch -0.02355
+wandb:                  cumulative_reward_run{'meta_n_steps': 2048, 'sb3_model': 'PPO'}_task0_per_epoch -1.32143
+wandb:                  cumulative_reward_run{'meta_n_steps': 2048, 'sb3_model': 'PPO'}_task1_per_epoch 3.41351
+wandb:         cumulative_reward_run{'meta_n_steps': 2048, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch -0.1953
+wandb:         cumulative_reward_run{'meta_n_steps': 2048, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch -0.04966
+wandb:                     cumulative_reward_run{'meta_n_steps': 5, 'sb3_model': 'PPO'}_task0_per_epoch 0
+wandb:                     cumulative_reward_run{'meta_n_steps': 5, 'sb3_model': 'PPO'}_task1_per_epoch -2.00884
+wandb:            cumulative_reward_run{'meta_n_steps': 5, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch 0.90618
+wandb:            cumulative_reward_run{'meta_n_steps': 5, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch 0
+wandb:                   cumulative_reward_run{'meta_n_steps': 512, 'sb3_model': 'PPO'}_task0_per_epoch -1
+wandb:                   cumulative_reward_run{'meta_n_steps': 512, 'sb3_model': 'PPO'}_task1_per_epoch -2
+wandb:          cumulative_reward_run{'meta_n_steps': 512, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch -0.00678
+wandb:          cumulative_reward_run{'meta_n_steps': 512, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch 0
+wandb:                           errors_run{'meta_clip_range': 0.1, 'sb3_model': 'PPO'}_task0_per_epoch 827
+wandb:                           errors_run{'meta_clip_range': 0.1, 'sb3_model': 'PPO'}_task1_per_epoch 804
+wandb:                  errors_run{'meta_clip_range': 0.1, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch 25
+wandb:                  errors_run{'meta_clip_range': 0.1, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch 19
+wandb:                           errors_run{'meta_clip_range': 0.2, 'sb3_model': 'PPO'}_task0_per_epoch 821
+wandb:                           errors_run{'meta_clip_range': 0.2, 'sb3_model': 'PPO'}_task1_per_epoch 822
+wandb:                  errors_run{'meta_clip_range': 0.2, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch 12
+wandb:                  errors_run{'meta_clip_range': 0.2, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch 20
+wandb:                           errors_run{'meta_clip_range': 0.3, 'sb3_model': 'PPO'}_task0_per_epoch 822
+wandb:                           errors_run{'meta_clip_range': 0.3, 'sb3_model': 'PPO'}_task1_per_epoch 826
+wandb:                  errors_run{'meta_clip_range': 0.3, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch 16
+wandb:                  errors_run{'meta_clip_range': 0.3, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch 360
+wandb:                     errors_run{'meta_learning_rate': 0.0003, 'sb3_model': 'PPO'}_task0_per_epoch 824
+wandb:                     errors_run{'meta_learning_rate': 0.0003, 'sb3_model': 'PPO'}_task1_per_epoch 819
+wandb:            errors_run{'meta_learning_rate': 0.0003, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch 60
+wandb:            errors_run{'meta_learning_rate': 0.0003, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch 60
+wandb:                      errors_run{'meta_learning_rate': 0.001, 'sb3_model': 'PPO'}_task0_per_epoch 818
+wandb:                      errors_run{'meta_learning_rate': 0.001, 'sb3_model': 'PPO'}_task1_per_epoch 785
+wandb:             errors_run{'meta_learning_rate': 0.001, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch 51
+wandb:             errors_run{'meta_learning_rate': 0.001, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch 13
+wandb:                       errors_run{'meta_learning_rate': 0.01, 'sb3_model': 'PPO'}_task0_per_epoch 935
+wandb:                       errors_run{'meta_learning_rate': 0.01, 'sb3_model': 'PPO'}_task1_per_epoch 833
+wandb:              errors_run{'meta_learning_rate': 0.01, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch 2047
+wandb:              errors_run{'meta_learning_rate': 0.01, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch 2047
+wandb:                              errors_run{'meta_n_steps': 128, 'sb3_model': 'PPO'}_task0_per_epoch 209
+wandb:                              errors_run{'meta_n_steps': 128, 'sb3_model': 'PPO'}_task1_per_epoch 205
+wandb:                     errors_run{'meta_n_steps': 128, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch 39
+wandb:                     errors_run{'meta_n_steps': 128, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch 50
+wandb:                             errors_run{'meta_n_steps': 2048, 'sb3_model': 'PPO'}_task0_per_epoch 817
+wandb:                             errors_run{'meta_n_steps': 2048, 'sb3_model': 'PPO'}_task1_per_epoch 817
+wandb:                    errors_run{'meta_n_steps': 2048, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch 17
+wandb:                    errors_run{'meta_n_steps': 2048, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch 15
+wandb:                                errors_run{'meta_n_steps': 5, 'sb3_model': 'PPO'}_task0_per_epoch 119
+wandb:                                errors_run{'meta_n_steps': 5, 'sb3_model': 'PPO'}_task1_per_epoch 211
+wandb:                       errors_run{'meta_n_steps': 5, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch 1
+wandb:                       errors_run{'meta_n_steps': 5, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch 0
+wandb:                              errors_run{'meta_n_steps': 512, 'sb3_model': 'PPO'}_task0_per_epoch 211
+wandb:                              errors_run{'meta_n_steps': 512, 'sb3_model': 'PPO'}_task1_per_epoch 207
+wandb:                     errors_run{'meta_n_steps': 512, 'sb3_model': 'RecurrentPPO'}_task0_per_epoch 30
+wandb:                     errors_run{'meta_n_steps': 512, 'sb3_model': 'RecurrentPPO'}_task1_per_epoch 15
+wandb: 
+wandb: 🚀 View run tuning_1223_2316 at: https://wandb.ai/mattstachyra/reinforcement-meta-learning/runs/zihxh21g
+wandb: ️⚡ View job at https://wandb.ai/mattstachyra/reinforcement-meta-learning/jobs/QXJ0aWZhY3RDb2xsZWN0aW9uOjEyMzY1Nzc3Ng==/version_details/v51
+wandb: Synced 6 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20231223_231629-zihxh21g/logs

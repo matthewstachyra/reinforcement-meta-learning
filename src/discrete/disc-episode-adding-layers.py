@@ -25,6 +25,7 @@ def generate_config():
         'device' : 'cuda',
         'wandb_tag' : '',
         'run_datetime' : '',
+        'exp_file' : '',
         'n_runs' : 1,
         'epochs' : 3,
         'timesteps' : 50,
@@ -52,7 +53,7 @@ def generate_config():
     return config
 default_config = generate_config()
 parser = argparse.ArgumentParser(description="REML command line")
-parser.add_argument("--exp_file", type=str, help="Path to JSON file containing list of dictionaries with experiments")
+parser.add_argument('--exp_file', type=str, default=default_config['exp_file'], help='Path to JSON file containing list of dictionaries with experiments')
 parser.add_argument('--n_runs', type=int, default=default_config['n_runs'], help='Number of runs', required=False)
 parser.add_argument('--n_tasks', type=int, default=default_config['n_tasks'], help='Number of tasks to generate', required=False)
 parser.add_argument('--epochs', '-e', type=int, default=default_config['epochs'], help='Epochs', required=False)
@@ -88,12 +89,12 @@ def generate_tasks():
     tasks_data = torch.tensor(np.array([
         X
         for _ in range(config['n_tasks'])
-    ])).float()
+    ]).astype(np.float32)).float()
     tasks_targets = torch.tensor(np.array([
         [(a * np.sin(x + p)).float()
         for x in X]
         for a, p in zip(amps, phases)
-    ])).float()
+    ]).astype(np.float32)).float()
     tasks_info = [
             {'i' : i, 
             'amp' : a, 
