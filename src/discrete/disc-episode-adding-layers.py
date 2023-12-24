@@ -1,6 +1,7 @@
 # sequence is adding layers from pool with negative loss learning signal
 import os
 import argparse
+import datetime
 import math
 import copy 
 import random
@@ -13,116 +14,117 @@ import torch
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
 import gymnasium
-from typing import (
-    Type,
-    List,
-    Tuple,
-)
-from sb3_contrib import RecurrentPPO
-from stable_baselines3 import PPO
+from typing import (Type,List,Tuple,)
+import sb3_contrib
+import stable_baselines3
 import wandb
-import matplotlib.pyplot as plt
 
-default_config = {
-    'seed' : 41,
-    'device' : 'cuda',
-    'wandb_run' : '',
-    'timestamp' : '',
-    'n_runs' : 1,
-    'epochs' : 1,
-    'timesteps' : 100,
-    'n_x' : 100,
-    'n_tasks' : 7,
-    'task_min_loss' : defaultdict(lambda: float('inf')),
-    'task_max_loss' : defaultdict(lambda: -float('inf')),
-    'in_features' : 1,
-    'out_features' : 1,
-    'n_pool_hidden_layers' : 10,
-    'n_hidden_layers_per_network' : 3,
-    'n_layers_per_network' : 5,
-    'n_nodes_per_layer' : 40,
-    'pool_layer_type' : torch.nn.Linear,
-    'batch_size' : 64,
-    'learning_rate' : 0.01,
-    'meta_learning_rate' : 0.0003, # 0.01, 0.001, 0.0003
-    'meta_batch_size' :  32, # 32, 64(default), 128
-    'meta_clip_range' : 0.1, # 0.1, 0.2 (default), 0.3 
-    'meta_n_steps' : 128, # 5, 128, 1024, 2048 (default)
-    'loss_fn' : torch.nn.MSELoss(),
-    'sb3_model' : 'PPO',
-    'sb3_policy' : 'MlpPolicy',
-    'data_dir' : 'data',
-    }
-config = default_config
-config['n_pool_hidden_layers'] = config['n_tasks'] * config['n_hidden_layers_per_network']
+def generate_config():
+    config = {
+        'seed' : 41,
+        'device' : 'cuda',
+        'wandb_tag' : '',
+        'run_datetime' : '',
+        'n_runs' : 1,
+        'epochs' : 3,
+        'timesteps' : 50,
+        'n_x' : 100,
+        'n_tasks' : 3,
+        'task_min_loss' : defaultdict(lambda: float('inf')),
+        'task_max_loss' : defaultdict(lambda: -float('inf')),
+        'in_features' : 1,
+        'out_features' : 1,
+        'n_pool_hidden_layers' : 10,
+        'n_hidden_layers_per_network' : 3,
+        'n_layers_per_network' : 5,
+        'n_nodes_per_layer' : 40,
+        'pool_layer_type' : torch.nn.Linear,
+        'batch_size' : 64,
+        'learning_rate' : 0.01,
+        'meta_learning_rate' : 0.0003, # 0.01, 0.001, 0.0003
+        'meta_clip_range' : 0.2,       # 0.1, 0.2 (default), 0.3 
+        'meta_n_steps' : 2048,         # 5, 128, 512, 1024, 2048 (default)
+        'loss_fn' : torch.nn.MSELoss(),
+        'sb3_model' : 'PPO',
+        'data_dir' : 'data',
+        }
+    config['n_pool_hidden_layers'] = config['n_tasks'] * config['n_hidden_layers_per_network']
+    return config
+default_config = generate_config()
 parser = argparse.ArgumentParser(description="REML command line")
+parser.add_argument("--exp_file", type=str, help="Path to JSON file containing list of dictionaries with experiments")
 parser.add_argument('--n_runs', type=int, default=default_config['n_runs'], help='Number of runs', required=False)
 parser.add_argument('--n_tasks', type=int, default=default_config['n_tasks'], help='Number of tasks to generate', required=False)
 parser.add_argument('--epochs', '-e', type=int, default=default_config['epochs'], help='Epochs', required=False)
 parser.add_argument('--timesteps', '-t', type=int, default=default_config['timesteps'], help='Timesteps', required=False)
 parser.add_argument('--sb3_model',  type=str, default=default_config['sb3_model'], help='SB3 model to use', required=False)
-parser.add_argument('--sb3_policy', type=str, default=default_config['sb3_policy'], help='SB3 policy to use', required=False)
 parser.add_argument('--data_dir', '-o', type=str, default=default_config['data_dir'], help='Directory to save tensorboard logs', required=False)
-parser.add_argument('--wandb_run', type=str, default=default_config['wandb_run'], help='Name of run on wandb', required=False)
+parser.add_argument('--wandb_tag', type=str, default=default_config['wandb_tag'], help='Name of run on wandb', required=False)
 parser.add_argument('--meta_learning_rate', type=float, default=default_config['meta_learning_rate'], help='Learning rate', required=False)
-parser.add_argument('--meta_batch_size', type=int, default=default_config['meta_batch_size'], help='Batch size', required=False)
 parser.add_argument('--meta_clip_range', type=float, default=default_config['meta_clip_range'], help='Clip range', required=False)
 parser.add_argument('--meta_n_steps', type=int, default=default_config['meta_n_steps'], help='Horizon', required=False)
 args = parser.parse_args()
 config = { key : getattr(args, key, default_value) for key, default_value in default_config.items() }
 
-# seed
-def randomize_seed():
-    new_seed = random.randint(1, 1000)
-    config['seed'] = new_seed
+def set_seed(seed=None):
+    if seed==None:
+        seed = random.randint(1, 1000)
+    config['seed'] = seed
     random.seed(config['seed'])
     np.random.seed(config['seed'])
     torch.manual_seed(config['seed'])
-randomize_seed()
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed) 
+set_seed()
 
-# wandb
-timestamp = datetime.datetime.now().strftime('%m%d_%H-%M')
-name = f"{config['sb3_model']}_{timestamp}"
-config['timestamp'] = timestamp
-wandb.init(
-    project='reinforcement-meta-learning',
-    config=config,
-    name=config['wandb_run']
-)
-print(f'[INFO] Config={config}')
+def generate_tasks():
+    lower_bound = torch.tensor(-5).float()
+    upper_bound = torch.tensor(5).float()
+    X = np.linspace(lower_bound, upper_bound, config['n_x'])
+    amplitude_range = torch.tensor([0.1, 5.0]).float()
+    phase_range = torch.tensor([0, math.pi]).float()
+    amps = torch.rand(config['n_tasks'], 1) * (amplitude_range[1] - amplitude_range[0]) + amplitude_range[0]
+    phases = torch.rand(config['n_tasks'], 1) * (phase_range[1] - phase_range[0]) + phase_range[0]
+    tasks_data = torch.tensor(np.array([
+        X
+        for _ in range(config['n_tasks'])
+    ])).float()
+    tasks_targets = torch.tensor(np.array([
+        [(a * np.sin(x + p)).float()
+        for x in X]
+        for a, p in zip(amps, phases)
+    ])).float()
+    tasks_info = [
+            {'i' : i, 
+            'amp' : a, 
+            'phase_shift' : p, 
+            'lower_bound' : lower_bound, 
+            'upper_bound' : upper_bound, 
+            'amplitude_range_lower_bound' : amplitude_range[0], 
+            'amplitude_range_upper_bound' : amplitude_range[1], 
+            'phase_range_lower_bound' : phase_range[0],
+            'phase_range_lower_bound' : phase_range[1]}
+            for i, (a, p) in enumerate(zip(amps, phases))
+    ]
+    print(f'[INFO] Tasks created.')
+    return tasks_data, tasks_targets, tasks_info
 
-# tasks
-lower_bound = torch.tensor(-5).float()
-upper_bound = torch.tensor(5).float()
-X = np.linspace(lower_bound, upper_bound, config['n_x'])
-amplitude_range = torch.tensor([0.1, 5.0]).float()
-phase_range = torch.tensor([0, math.pi]).float()
+def setup_path(path, run_datetime):
+   os.makedirs(path, exist_ok=True) 
+   os.makedirs(os.path.join(path, run_datetime), exist_ok=True)
+   path = f"{path}/{run_datetime}"
+   print(path)
+   return path
 
-amps = torch.rand(config['n_tasks'], 1) * (amplitude_range[1] - amplitude_range[0]) + amplitude_range[0]
-phases = torch.rand(config['n_tasks'], 1) * (phase_range[1] - phase_range[0]) + phase_range[0]
-
-tasks_data = torch.tensor(np.array([
-    X
-    for _ in range(config['n_tasks'])
-])).float()
-tasks_targets = torch.tensor(np.array([
-    [(a * np.sin(x + p)).float()
-     for x in X]
-    for a, p in zip(amps, phases)
-])).float()
-tasks_info = [
-        {'i' : i, 
-         'amp' : a, 
-         'phase_shift' : p, 
-         'lower_bound' : lower_bound, 
-         'upper_bound' : upper_bound, 
-         'amplitude_range_lower_bound' : amplitude_range[0], 
-         'amplitude_range_upper_bound' : amplitude_range[1], 
-         'phase_range_lower_bound' : phase_range[0],
-         'phase_range_lower_bound' : phase_range[1]}
-        for i, (a, p) in enumerate(zip(amps, phases))
-]
-print(f'[INFO] Tasks created.')
+def generate_configs(experiments, base_config=config):
+    configs = []
+    for value_dict in experiments:
+        new_config = copy.deepcopy(base_config)
+        for key, value in value_dict.items():
+            new_config[key] = value 
+        configs.append(new_config)
+    print(configs)
+    return configs
 
 class LayerPool:
     def __init__(self, 
@@ -262,7 +264,7 @@ class InnerNetwork(gymnasium.Env, torch.nn.Module):
         reward = self.reward()
         self.log()
 
-        # pool
+        # update pool
         for index, layer in zip(self.layers_pool_indices, self.layers[1:-1]):
             self.layer_pool.layers[index] = layer
 
@@ -392,10 +394,10 @@ class InnerNetwork(gymnasium.Env, torch.nn.Module):
         self.loss_vals.append(copy.copy(self.curr['loss'].item()))
         self.reward_vals.append(copy.copy(self.curr['reward'].item()))
         self.errors = self.errors + 1 if self.curr['action_type']==InnerNetworkAction.ERROR else self.errors
-        wandb.log({ f'loss_task{task_num}_per_step' : self.curr['loss']})
-        wandb.log({ f'reward_task{task_num}_per_step' : self.curr['reward']})
-        wandb.log({ f'action_types_task{task_num}_per_step' : wandb.Histogram(torch.tensor([self.actions_taken]))})
-        wandb.log({ f'pool_indices_task{task_num}_per_step' : wandb.Histogram(torch.tensor(self.layers_pool_indices))})
+        # wandb.log({ f'loss_task{task_num}_per_step' : self.curr['loss']})
+        # wandb.log({ f'reward_task{task_num}_per_step' : self.curr['reward']})
+        # wandb.log({ f'action_types_task{task_num}_per_step' : wandb.Histogram(torch.tensor([self.actions_taken]))})
+        # wandb.log({ f'pool_indices_task{task_num}_per_step' : wandb.Histogram(torch.tensor(self.layers_pool_indices))})
 
     def reset(self, seed=None) -> np.ndarray:
         # print(f"[INFO] Reset at timestep={self.timestep}, layers={self.layers_pool_indices}")
@@ -411,6 +413,10 @@ class InnerNetwork(gymnasium.Env, torch.nn.Module):
         self.actions_taken = []
         self.loss_vals = []
         self.reward_vals = []
+        # TODO is to try reseting local max and min losees at the episode level and not
+        # just at the epoch level as is now
+        # self.local_max_loss = None
+        # self.local_min_loss = None
 
         self.train()
         self.next_batch()
@@ -422,38 +428,38 @@ class REML:
         self,
         layer_pool: LayerPool,
         tasks: List[InnerNetworkTask],
-        path: str,
-        run: int=1,
-        model=config['sb3_model'],
-        policy=config['sb3_policy'],
-        epochs: int=config['epochs'],
-        timesteps: int=config['timesteps'],
+        run: str,
+        config=config,
         ):
         self.layer_pool = layer_pool
         self.tasks = tasks
-        self.path=path
-        if config['sb3_model']=='PPO':
-            model = PPO
-        elif config['sb3_model']=='RecurrentPPO':
-            model = RecurrentPPO
-        dummy_env = self.make_env(tasks[0], layer_pool) 
+        self.config = config
         self.run = run
-        self.model = model(policy, 
-                           dummy_env, 
-                           seed=config['seed'], 
-                           n_steps=config['meta_n_steps'], 
-                           learning_rate=config['meta_learning_rate'],
-                           clip_range=config['meta_clip_range'],
-                           batch_size=config['meta_batch_size'])
-        self.policy = policy
-        self.epochs = epochs
-        self.timesteps = timesteps
-        self.cumureward_epochs = defaultdict(lambda: [])
-        self.cumuloss_epochs = defaultdict(lambda: [])
-        self.errors_epochs = defaultdict(lambda: [])
+        dummy_env = self.make_env(tasks[0], layer_pool) 
+        if config['sb3_model']=='PPO':
+            self.model = stable_baselines3.PPO(
+                'MlpPolicy', 
+                dummy_env, 
+                seed=config['seed'], 
+                n_steps=config['meta_n_steps'], 
+                learning_rate=config['meta_learning_rate'],
+                clip_range=config['meta_clip_range'],
+                )
+        elif config['sb3_model']=='RecurrentPPO':
+            self.model = sb3_contrib.RecurrentPPO(
+                'MlpLstmPolicy', 
+                dummy_env, 
+                seed=config['seed'], 
+                n_steps=config['meta_n_steps'], 
+                learning_rate=config['meta_learning_rate'],
+                clip_range=config['meta_clip_range'],
+                )
+        self.task_cumureward = defaultdict(lambda: [])
+        self.task_cumuloss = defaultdict(lambda: [])
+        self.task_errors = defaultdict(lambda: [])
 
     def __str__(self) -> str:
-        return f'REML(model={self.model}, policy={self.policy})'
+        return f"REML(model={self.config['sb3_model']}, policy={self.config['sb3_policy']})"
     
     def make_env(self, task, epoch=None, calibration=False) -> gymnasium.Env:
         return gymnasium.wrappers.NormalizeObservation(InnerNetwork(task, self.layer_pool, epoch=epoch, calibration=calibration))
@@ -466,23 +472,14 @@ class REML:
             print(f'[INFO] Calculating min and max loss for task {i+1}.')
             self.env = self.make_env(task, calibration=True)
             self.model.set_env(self.env)
-            self.model.learn(total_timesteps=self.timesteps)
-            config['task_min_loss'][task.info['i']] = min(self.env.task_min_loss, config['task_min_loss'][task.info['i']])
-            config['task_max_loss'][task.info['i']] = max(self.env.task_max_loss, config['task_max_loss'][task.info['i']])
+            self.model.learn(total_timesteps=self.config['timesteps'])
+            config['task_min_loss'][task.info['i']] = min(self.env.task_min_loss, self.config['task_min_loss'][task.info['i']])
+            config['task_max_loss'][task.info['i']] = max(self.env.task_max_loss, self.config['task_max_loss'][task.info['i']])
     
     def train(self):
-        # wraps stablebaselines3 learn() so we call it n * m times
-        # n is the number of epochs where we run all m tasks
-        # we use the same policy, swapping out envs for the n tasks, m times. 
-
-        # get min and max loss for task to calculate learning signals
         self.calibrate()
-
-        # to calculate variance
-        # e.g., task: [ n: [epoch: [100 values]] ] / array with n rows, epoch columns 
-        # where cell @ [nth run][mth epoch] is cumulative loss/reward
-        for epoch in range(self.epochs):
-            print(f'[INFO] Epoch={epoch+1}/{self.epochs}')
+        for epoch in range(self.config['epochs']):
+            print(f"[INFO] Epoch={epoch+1}/{self.config['epochs']}")
             for i, task in enumerate(self.tasks): 
                 print(f'[INFO] Task={i+1}/{len(self.tasks)}')
 
@@ -490,27 +487,24 @@ class REML:
                 self.task = task 
                 self.env = self.make_env(task, epoch=epoch)
                 self.model.set_env(self.env)
-                self.model.learn(total_timesteps=self.timesteps)
+                self.model.learn(total_timesteps=self.config['timesteps'])
                 
                 # update min and max loss for task
                 local_min_loss = self.env.local_min_loss
                 local_max_loss = self.env.local_max_loss
-                config['task_min_loss'][self.task.info['i']] = min(local_min_loss, config['task_min_loss'][self.task.info['i']])
-                config['task_max_loss'][self.task.info['i']] = max(local_max_loss, config['task_max_loss'][self.task.info['i']])
+                self.config['task_min_loss'][self.task.info['i']] = min(local_min_loss, self.config['task_min_loss'][self.task.info['i']])
+                self.config['task_max_loss'][self.task.info['i']] = max(local_max_loss, self.config['task_max_loss'][self.task.info['i']])
 
                 # track reward and loss for plots
-                self.cumureward_epochs[str(self.task.info['i'])].append(sum(self.env.reward_vals))
-                self.cumuloss_epochs[str(self.task.info['i'])].append(sum(self.env.loss_vals))
-                self.errors_epochs[str(self.task.info['i'])].append(self.env.errors)
+                self.task_cumureward[str(self.task.info['i'])].append(sum(self.env.reward_vals))
+                self.task_cumuloss[str(self.task.info['i'])].append(sum(self.env.loss_vals))
+                self.task_errors[str(self.task.info['i'])].append(self.env.errors)
 
                 # log to wandb
                 wandb.log({ f'errors_run{self.run}_task{i}_per_epoch' : self.env.errors })
                 wandb.log({ f'cumulative_reward_run{self.run}_task{i}_per_epoch' : sum(self.env.reward_vals) })
                 wandb.log({ f'cumulative_loss_run{self.run}_task{i}_per_epoch' : sum(self.env.loss_vals) })
                 wandb.log({ f'pool_indices_run{self.run}_task{i}_per_epoch' : wandb.Histogram(torch.tensor(self.env.layers_pool_indices))})
-
-                # NOTE running this during training consumes a lot of memory
-                # plot_sine_curves(self, tasks=[self.task], path=self.path, run=self.run, epoch=epoch, image=True)
 
 class RegressionModel(torch.nn.Module):
     def __init__(self):
@@ -527,57 +521,54 @@ class RegressionModel(torch.nn.Module):
         x = self.layers[-1](x)
         return x
 
+def run(experiments, config, seed=41):
+    set_seed(seed)
+    run_datetime = datetime.datetime.now().strftime("%m%d_%H%M")
+    config['run_datetime'] = run_datetime
+    config['wandb_tag'] = f'tuning_{run_datetime}'
+    configs = generate_configs(experiments)
+    path = setup_path(path='tune', run_datetime=run_datetime)
+    wandb.init(
+        project='reinforcement-meta-learning',
+        config=config,
+        name=config['wandb_tag']
+    )
 
-if __name__ == "__main__":
-
-    # create tasks
-    tasks = [InnerNetworkTask(data=tasks_data[i], targets=tasks_targets[i], info=tasks_info[i]) for i in range(config['n_tasks'])]
+    data, targets, info = generate_tasks()
+    tasks = [InnerNetworkTask(data=data[i], targets=targets[i], info=info[i]) for i in range(config['n_tasks'])]
     eval_task = random.choice(list(tasks))
     training_tasks = list(set(tasks) - {eval_task})
+    torch.save(training_tasks, os.path.join(path, f'trainingtasks.pth'))
+    torch.save(eval_task, os.path.join(path, f'evaltask.pth'))
 
-    # n models saved, n pools saved, and 1 data dict saved
-    # e.g.,
-    # PPO_1218_10-02_model_n -> run n model
-    # PPO_1218_10-02_layers_n -> run n layers
-    # data/PPO_1218_10-02 -> all runs data
-    cumureward_task_runbyepoch = defaultdict(lambda: [])
-    cumuloss_task_runbyepoch = defaultdict(lambda: [])
-    errors_task_runbyepoch = defaultdict(lambda: [])
-    data_path = f"{config['data_dir']}/{name}"
-    os.makedirs(data_path, exist_ok=True)
-
-    # save tasks
-    torch.save(training_tasks, f'{name}_trainingtasks.pth')
-    torch.save(eval_task, f'{name}_evaltask.pth')
-
-    for run in range(1, config['n_runs']+1):     
-        print(f"[INFO] n={run}")
-
-        randomize_seed()
-
-        # train
+    exp_tasks = defaultdict(lambda: defaultdict(lambda: []))
+    for exp, config in zip(experiments, configs): 
         pool = LayerPool()
-        reml = REML(tasks=training_tasks, layer_pool=pool, run=run, path=data_path)
+        reml = REML(tasks=training_tasks, layer_pool=pool, run=exp, config=config)
         reml.train()
 
-        # save model
-        model_path = f"{data_path.split('/', 1)[-1]}_model_{run}"
-        reml.model.save(model_path)
-
-        # save pool
+        # save model, layers
+        exp_string = ''.join(f'{key}{value}' for key, value in exp.items())
+        reml.model.save(os.path.join(path, f"model_{exp_string}"))
         layers = copy.deepcopy(pool.layers)
         layers.insert(0, pool.initial_input_layer)
         layers.append(pool.initial_output_layer)
-        torch.save(layers, f'{name}_layers_{run}.pth')
+        torch.save(layers, os.path.join(path, f"layers_{exp_string}.pth"))
 
-        # save return, loss, and error data
-        for task in tasks:
-            cumureward_task_runbyepoch[str(task.info['i'])].append(reml.cumureward_epochs[str(task.info['i'])])
-            cumuloss_task_runbyepoch[str(task.info['i'])].append(reml.cumuloss_epochs[str(task.info['i'])])
-            errors_task_runbyepoch[str(task.info['i'])].append(reml.errors_epochs[str(task.info['i'])])
-        with open(f'{data_path}/{name}_cumureward', 'w') as json_file:
-            json.dump(cumureward_task_runbyepoch, json_file, indent=4)
-        with open(f'{data_path}/{name}_cumuloss', 'w') as json_file:
-            json.dump(cumuloss_task_runbyepoch, json_file, indent=4)
-        with open(f'{data_path}/{name}_errors', 'w') as json_file:
-            json.dump(errors_task_runbyepoch, json_file, indent=4)
+        # save cumulative rewards
+        exp_tasks[exp_string] = reml.task_cumureward # { task: [return, return, return, ...] }
+
+    with open(os.path.join(path, f"exp_tasks"), 'w') as json_file:
+        json.dump(exp_tasks, json_file, indent=4)
+
+    with open(os.path.join(path, f"experiments"), 'w') as json_file:
+        json.dump(experiments, json_file, indent=4)
+    
+    return path
+
+if __name__ == "__main__":
+    args = parser.parse_args() 
+    with open(args.exp_file, "r") as f:
+        experiments = json.load(f)
+        config = generate_config()
+        key = run(experiments, config)
