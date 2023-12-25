@@ -53,7 +53,7 @@ def generate_config():
     return config
 default_config = generate_config()
 parser = argparse.ArgumentParser(description="REML command line")
-parser.add_argument('--exp_file', type=str, default=default_config['exp_file'], help='Path to JSON file containing list of dictionaries with experiments')
+parser.add_argument("--exp_file", type=str, default=default_config['exp_file'], help="Path to JSON file containing list of dictionaries with experiments")
 parser.add_argument('--n_runs', type=int, default=default_config['n_runs'], help='Number of runs', required=False)
 parser.add_argument('--n_tasks', type=int, default=default_config['n_tasks'], help='Number of tasks to generate', required=False)
 parser.add_argument('--epochs', '-e', type=int, default=default_config['epochs'], help='Epochs', required=False)
@@ -567,9 +567,100 @@ def run(experiments, config, seed=41):
     
     return path
 
+def run(config, experiments=None, seed=41):
+    set_seed(seed)
+    run_datetime = datetime.datetime.now().strftime("%m%d_%H%M")
+    config['run_datetime'] = run_datetime
+
+    if experiments:
+        path = setup_path(path='tune', run_datetime=run_datetime)
+        config['wandb_tag'] = f'tune_{run_datetime}'
+        configs = generate_configs(experiments)
+        data, targets, info = generate_tasks()
+        tasks = [InnerNetworkTask(data=data[i], targets=targets[i], info=info[i]) for i in range(config['n_tasks'])]
+        eval_task = random.choice(list(tasks))
+        training_tasks = list(set(tasks) - {eval_task})
+        torch.save(training_tasks, os.path.join(path, f'trainingtasks.pth'))
+        torch.save(eval_task, os.path.join(path, f'evaltask.pth'))
+        wandb.init(
+            project='reinforcement-meta-learning',
+            config=config,
+            name=config['wandb_tag']
+        )
+        exp_tasks = defaultdict(lambda: defaultdict(lambda: []))
+        for exp, config in zip(experiments, configs): 
+            pool = LayerPool()
+            reml = REML(tasks=training_tasks, layer_pool=pool, run=exp, config=config)
+            reml.train()
+
+            # save model, layers
+            exp_string = ''.join(f'{key}{value}' for key, value in exp.items())
+            reml.model.save(os.path.join(path, f"model_{exp_string}"))
+            layers = copy.deepcopy(pool.layers)
+            layers.insert(0, pool.initial_input_layer)
+            layers.append(pool.initial_output_layer)
+            torch.save(layers, os.path.join(path, f"layers_{exp_string}.pth"))
+
+            # save cumulative rewards
+            exp_tasks[exp_string] = reml.task_cumureward # { task: [return, return, return, ...] }
+
+        with open(os.path.join(path, f"exp_tasks"), 'w') as json_file:
+            json.dump(exp_tasks, json_file, indent=4)
+
+        with open(os.path.join(path, f"experiments"), 'w') as json_file:
+            json.dump(experiments, json_file, indent=4)
+    else:
+        path = setup_path(path='evaluation', run_datetime=run_datetime)
+        data, targets, info = generate_tasks()
+        tasks = [InnerNetworkTask(data=data[i], targets=targets[i], info=info[i]) for i in range(config['n_tasks'])]
+        eval_task = random.choice(list(tasks))
+        training_tasks = list(set(tasks) - {eval_task})
+        torch.save(training_tasks, os.path.join(path, f'trainingtasks.pth'))
+        torch.save(eval_task, os.path.join(path, f'evaltask.pth'))
+        config['wandb_tag'] = f'evaluation_{run_datetime}'
+        wandb.init(
+            project='reinforcement-meta-learning',
+            config=config,
+            name=config['wandb_tag']
+        )
+        task_run_cumureward = defaultdict(lambda: [])
+        task_run_cumuloss = defaultdict(lambda: [])
+        task_run_errors =  defaultdict(lambda: [])
+        for run in range(1, config['n_runs']+1):
+
+            set_seed(seed) # new seed per task
+
+            pool = LayerPool()
+            reml = REML(tasks=training_tasks, layer_pool=pool, run=run, config=config)
+            reml.train()
+
+            # save model, layers
+            reml.model.save(os.path.join(path, f"model_{run}"))
+            layers = copy.deepcopy(pool.layers)
+            layers.insert(0, pool.initial_input_layer)
+            layers.append(pool.initial_output_layer)
+            torch.save(layers, os.path.join(path, f"layers_{run}.pth"))
+
+            # save return, loss, and error data
+            for task in tasks:
+                task_run_cumureward[str(task.info['i'])].append(reml.task_cumureward[str(task.info['i'])])
+                task_run_cumuloss[str(task.info['i'])].append(reml.task_cumuloss[str(task.info['i'])])
+                task_run_errors[str(task.info['i'])].append(reml.task_errors[str(task.info['i'])])
+            with open(os.path.join(path, f'cumureward_{run}'), 'w') as json_file:
+                json.dump(task_run_cumureward, json_file, indent=4)
+            with open(os.path.join(path, f'cumuloss_{run}'), 'w') as json_file:
+                json.dump(task_run_cumuloss, json_file, indent=4)
+            with open(os.path.join(path, f'errors_{run}'), 'w') as json_file:
+                json.dump(task_run_errors, json_file, indent=4)
+        
+    return path
+
 if __name__ == "__main__":
     args = parser.parse_args() 
-    with open(args.exp_file, "r") as f:
-        experiments = json.load(f)
-        config = generate_config()
-        key = run(experiments, config)
+    config = generate_config()
+    if args.exp_file:
+        with open(args.exp_file, "r") as f:
+            experiments = json.load(f)
+            run(experiments, config)
+    else:
+        run(config)

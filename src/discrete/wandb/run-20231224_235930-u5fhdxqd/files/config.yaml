@@ -8,10 +8,13 @@ device:
   value: cuda
 wandb_tag:
   desc: null
-  value: tuning_1223_2106
+  value: evaluation_1224_2359
 run_datetime:
   desc: null
-  value: '1223_2106'
+  value: '1224_2359'
+exp_file:
+  desc: null
+  value: ''
 n_runs:
   desc: null
   value: 1
@@ -84,9 +87,9 @@ _wandb:
     python_version: 3.11.7
     cli_version: 0.16.1
     framework: torch
-    is_jupyter_run: true
+    is_jupyter_run: false
     is_kaggle_kernel: false
-    start_time: 1703383614.083023
+    start_time: 1703480370.863714
     t:
       1:
       - 1
@@ -95,14 +98,12 @@ _wandb:
       - 1
       - 55
       3:
-      - 2
       - 13
       - 16
       - 23
       4: 3.11.7
       5: 0.16.1
       8:
-      - 1
       - 3
       - 5
       13: windows-amd64

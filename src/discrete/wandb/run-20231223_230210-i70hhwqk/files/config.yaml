@@ -8,10 +8,10 @@ device:
   value: cuda
 wandb_tag:
   desc: null
-  value: tuning_1223_2106
+  value: evaluation_1223_2302
 run_datetime:
   desc: null
-  value: '1223_2106'
+  value: '1223_2302'
 n_runs:
   desc: null
   value: 1
@@ -62,13 +62,13 @@ learning_rate:
   value: 0.01
 meta_learning_rate:
   desc: null
-  value: 0.0003
+  value: 0.001
 meta_clip_range:
   desc: null
   value: 0.2
 meta_n_steps:
   desc: null
-  value: 2048
+  value: 128
 loss_fn:
   desc: null
   value: MSELoss()
@@ -86,7 +86,7 @@ _wandb:
     framework: torch
     is_jupyter_run: true
     is_kaggle_kernel: false
-    start_time: 1703383614.083023
+    start_time: 1703390534.706725
     t:
       1:
       - 1
@@ -95,7 +95,6 @@ _wandb:
       - 1
       - 55
       3:
-      - 2
       - 13
       - 16
       - 23

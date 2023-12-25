@@ -1,0 +1,47 @@
+\contentsline {chapter}{Acknowledgements}{3}{}%
+\contentsline {chapter}{Abstract}{3}{}%
+\contentsline {chapter}{\numberline {1}Introduction}{5}{}%
+\contentsline {chapter}{\numberline {2}Related work}{7}{}%
+\contentsline {section}{\numberline {2.1}Title section 2.1}{8}{}%
+\contentsline {subsection}{\numberline {2.1.1}If needed}{8}{}%
+\contentsline {subsection}{\numberline {2.1.2}If needed}{8}{}%
+\contentsline {section}{\numberline {2.2}Title section 2.2}{8}{}%
+\contentsline {subsection}{\numberline {2.2.1}If needed}{8}{}%
+\contentsline {subsection}{\numberline {2.2.2}If needed}{8}{}%
+\contentsline {section}{\numberline {2.3}Title section 2.3}{8}{}%
+\contentsline {subsection}{\numberline {2.3.1}If needed}{8}{}%
+\contentsline {subsection}{\numberline {2.3.2}If needed}{8}{}%
+\contentsline {chapter}{\numberline {3}Background}{9}{}%
+\contentsline {section}{\numberline {3.1}Artificial Neural Networks}{9}{}%
+\contentsline {subsection}{\numberline {3.1.1}Starting from linear regression}{9}{}%
+\contentsline {subsection}{\numberline {3.1.2}Constructing neural networks}{10}{}%
+\contentsline {subsection}{\numberline {3.1.3}Training a neural network}{12}{}%
+\contentsline {subsection}{\numberline {3.1.4}Error function derivatives}{12}{}%
+\contentsline {subsection}{\numberline {3.1.5}Recurrent Neural Networks}{14}{}%
+\contentsline {subsection}{\numberline {3.1.6}Long Short-Term Memory Networks}{16}{}%
+\contentsline {section}{\numberline {3.2}Reinforcement Learning}{17}{}%
+\contentsline {subsection}{\numberline {3.2.1}Markov Decision Processes}{18}{}%
+\contentsline {subsection}{\numberline {3.2.2}Value Functions}{21}{}%
+\contentsline {subsection}{\numberline {3.2.3}Policy Gradient Methods}{21}{}%
+\contentsline {subsection}{\numberline {3.2.4}PPO}{21}{}%
+\contentsline {subsection}{\numberline {3.2.5}Recurrent Policy}{21}{}%
+\contentsline {section}{\numberline {3.3}Meta-Learning}{21}{}%
+\contentsline {subsection}{\numberline {3.3.1}Few shot learning}{21}{}%
+\contentsline {chapter}{\numberline {4}Method}{22}{}%
+\contentsline {section}{\numberline {4.1}Preliminaries}{22}{}%
+\contentsline {section}{\numberline {4.2}Formulation}{22}{}%
+\contentsline {section}{\numberline {4.3}Policy Representation}{24}{}%
+\contentsline {section}{\numberline {4.4}Policy Optimization}{24}{}%
+\contentsline {section}{\numberline {4.5}Learning Signal}{24}{}%
+\contentsline {section}{\numberline {4.6}Algorithm}{26}{}%
+\contentsline {section}{\numberline {4.7}Time complexity}{27}{}%
+\contentsline {section}{\numberline {4.8}Space complexity}{27}{}%
+\contentsline {section}{\numberline {4.9}Implementation}{27}{}%
+\contentsline {chapter}{\numberline {5}Evaluation}{29}{}%
+\contentsline {section}{\numberline {5.1}Task design}{29}{}%
+\contentsline {section}{\numberline {5.2}Setup}{30}{}%
+\contentsline {section}{\numberline {5.3}Policy selection and hyperparameter tuning}{30}{}%
+\contentsline {section}{\numberline {5.4}Training the policy}{33}{}%
+\contentsline {section}{\numberline {5.5}Meta-learning performance}{33}{}%
+\contentsline {chapter}{\numberline {6}Discussion}{34}{}%
+\contentsline {chapter}{Bibliography}{35}{}%

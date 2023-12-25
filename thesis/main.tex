@@ -21,13 +21,10 @@
 \newcommand{\R}{\mathbb R}
 \DeclarePairedDelimiter{\norm}{\lVert}{\rVert}
 \renewcommand\figurename{\textit{Figure}} 
-\graphicspath{{C:/Users/stach/Documents/reinforcement-meta-learning/src/discrete/slurm}}
-
+\graphicspath{{C:/Users/stach/Documents/reinforcement-meta-learning/src/discrete}}
 
 
 \begin{document}
-
-
 \title{
   {\Large \textbf{Learning to learn by gradient descent as a discrete-time finite-horizon MDP}}\\
   \vspace{2cm}
@@ -41,10 +38,11 @@
   {\normalsize Advisor: Jivko Sinapov}
   \date{}
 }
-
 \maketitle
-
-\input{chapters/Acknowledgement}
+\tableofcontents \clearpage
+\addcontentsline{toc}{chapter}{Acknowledgements}
+\addcontentsline{toc}{chapter}{Abstract}
+\input{chapters/Acknowledgements}
 \input{chapters/Abstract}
 \input{chapters/Introduction}
 \input{chapters/RelatedWork}
@@ -52,12 +50,6 @@
 \input{chapters/Method}
 \input{chapters/Evaluation}
 \input{chapters/Discussion}
-% APPENDICES ARE OPTIONAL
-% COMMENT OUT BOTH LINES BELOW TO REMOVE THEM
-% ADD CHAPTERS TO ADD MULTIPLE APPENDICES
-
-
 \cleardoublepage 
 \printbibliography[title={Bibliography},heading=bibintoc]
-
 \end{document}

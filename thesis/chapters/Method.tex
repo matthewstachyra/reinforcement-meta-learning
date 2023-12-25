@@ -180,9 +180,25 @@ very effective.
 \end{algorithmic}
 \end{algorithm}
 
+\section{Time complexity}
+The time complexity is $O(E * \mathcal{D} * T * \frac{n}{b}(h*g))$ 
+where $E$ is the number of training epochs, $\mathcal{D}$ is the set of tasks, 
+$T$ is the number of timesteps, $\frac{n}{b}$ represents the number of batches
+trained over where $n$ is the number of datapoints for a task and $b$ is the
+batch size. The $h*g$ in the inner loop represents the gradient steps $g$ and 
+the network depth $h$ of the constructed network by REML.
+
+\section{Space complexity}
+Memory is used to store the tasks $\mathcal{D}$, the layers in the layer pool 
+$\mathcal{L}$, the parameters of the policy network $\theta_{o}$, and copies of $l \in \mathcal{L}$ 
+layers for the constructed network $\theta_{i}$. The space required by $\mathcal{L}$ is 
+$O(|\mathcal{D}|*h)$ where $h$ is the network depth.
+We represent $\theta_{o}$ of the policy with $m$ and $\theta_{i}$ with $n$.
+The space complexity of REML is $O(|\mathcal{D}|*h + m +n)$.
+
 \section{Implementation}
 REML was implemented using Pytorch for the layer pool and functions as part of the 
-the constructed networks $N$. Stablebaselines3 was used for policy with its open-source 
+the constructed networks. Stablebaselines3 was used for policy with its open-source 
 implementations of deep RL algorithms \cite{pytorch, RafHilGleKanErnDor:21}. 
 Stablebaselines3 was developed by researchers with the intent to 
 provide reliable baselines given recent findings that deep RL results are hard to 

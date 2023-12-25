@@ -1,6 +1,6 @@
 \chapter{Evaluation}
 \label{Evaluation}
-The following research questions guided evaluation of REML:
+The following research questions guided evaluation:
 \begin{itemize}
     \item Can REML transfer knowledge from tasks it has learned 
     to new tasks?
@@ -10,19 +10,19 @@ The following research questions guided evaluation of REML:
     \item Can REML generate models that learn near-optimal parameters 
     from few examples for unseen tasks (can it do few-shot learning)? 
 \end{itemize}
-These questions are evaluated in the context of a non-RL task with
-regression. REML is evaluated using varying sinusoidal curves, following the protocol 
+
+\section{Task design}
+The research questions are evaluated with regression. 
+REML is evaluated using varying sinusoidal curves, following the protocol 
 proposed by Finn, Abbeel, and Levine for Model Agnostic Meta-learning (MAML) 
 \cite{FinAbbLev:17}. Sine curves have an inherent periodicity for the meta-learner
 to learn across tasks.
-
-\section{Sinusoidal curve regression}
 The testbed is defined as a distribution of sine curves that vary in 
 amplitude and phase shift. The amplitude is chosen from [0.1, 5.0] and 
 phase shift is chosen from [0, pi]. Each task is a dataset with 100
-values linearly spaced within [-5, 5]. Batches of size 32 and 64 are 
-tested and compared with learning rates of 0.005 and 0.01.
-\\\\
+values linearly spaced within [-5, 5]. 
+
+\section{Setup}
 The layer pool $\mathcal{L}$ for this regression task is composed of linear 
 layers with 40 nodes. Layers are initialized with Xavier Glorot initialization to 
 minimize the chance of exploding or vanishing gradients, particularly in the 
@@ -35,32 +35,70 @@ is just the identity function given this is regression. Leaky ReLU was tested wi
 different alpha values but it generally slowed down convergence and there was no need
 without any observed irregularies in gradients. The hyperparameters for $N$ are 
 set ahead of time as the task is parameter search not hyperparameter search. 
-\\\\
 The Adam optimizer is used to train each $N$ at the end of an episode over 10 gradient 
 steps \cite{KinBa:14}. Such a small number of gradient steps is chosen to train for the few-shot 
 learning task where $k$ is no more than 10. Fewer gradient steps with Adam also 
 overcome the challenge discussed in the Method where Adam would compensate for REML's 
-errors and train a "bad" sequence of layers to the same or better MSE loss performance 
-than a sequence of layers observed with lower MSE loss without any gradient steps.
+errors and train a ``bad'' sequence of layers to the same or better MSE loss performance 
+than a sequence of layers observed with lower MSE loss without any gradient steps. Each
+run begins by calculating the max and mix loss observed for the task. This first pass
+through the tasks does not update the policy. These min and max loss values are used to 
+min-max scale the reward per task and to calculate the additional discount factor in the
+learning signal. Each environment created for a task is normalized.
+
+\section{Policy selection and hyperparameter tuning}
+Prior to training, initial experiments were run to compare the performance of the recurrent 
+and non-recurrent policies for this set of tasks. Each policy was evaluated with different
+hyperparameter values for the learning rate, clip range, and horizon.
 \\\\
-The MLP policy and LSTM policies tested with PPO are neural networks with 64 nodes 
-per layer with 2 layers, as defined by the benchmark implementation provided by Stablebaselines3 
-\cite{RafHilGleKanErnDor:21}. The default hyperparameters for the PPO implemenetation
-are used. The policy takes 2048 steps before making an update to the parameters with
-a batch size of 64. The learning rate is 0.0003 with a discount factor is 0.9.
+Learning rate controls the size of the gradient step taken, with higher rates using more 
+gradient information in each update than lower rates.
+Learning rate values tested are $0.01$, $0.001$, and $0.0003$ to observe performance over a 
+large range of rates. If performance varys greatly around one rate over another, additional 
+experiments to investigate sensitivity would be completed. The typical learning rate used
+with PPO is $0.0003$.
 \\\\
-Training performance is evaluated over epochs, averaged over 10 runs. 
-An epoch is here defined as one pass through the tasks. 
+Clip range is a hyperparameter unique to the PPO algorithm that controls the size of the update 
+to the policy, preventing excessively large updates that can destabilize training \cite{SchuWolDha:17}.
+The estimated policy gradient $\Delta \theta = \nabla_{\theta} J(\theta)$ is clipped in a range
+represented by $(-\epsilon, \epsilon)$ such that the gradient becomes 
+$\Delta \theta_{\text{clipped}} = \text{clip}(\Delta \theta, -\epsilon, \epsilon)$.
+Clip range values tested are $0.1$, $0.2$, and $0.3$. The typical clip range used with PPO is
+$0.2$.
+\\\\
+Experience horizon is the number of experiences gathered before an update is made to the policy. 
+In the stablebaselines3 implementation, the experience horizon is refered to as ``n steps''. Values 
+tested were $5$, $128$, $512$, $2048$. The small value $5$ was chosen as this is the typical length of an 
+episode. The larger value $2048$ is the typical value used. Here we are investigating whether 
+a shorter experience horizon where the policy is more myopic considering one $N$ architecture for 
+one task gives better meta-learning performance over a longer experience horizon considered multiple 
+$N$ architectures for multiple tasks.
+\begin{figure}[hbt!]  
+    \centering
+    \includegraphics[width=1.0\textwidth]{tune/1223_2316/hyperparameters_and_policies.png}
+    \caption{Evaluation of PPO with a recurrent policy and with a non-recurrent policy with 
+    different valeus for learning rate, clip range, and experience horizon. REML was run over 20 epochs 
+    on 7 tasks (6 training, 1 evaluation) with 1000 steps per task.}
+    \label{fig:Hyperparameters-policies} 
+\end{figure}
+\clearpage
+
+\section{Training the policy}
+To track policy training, we observe per epoch the rewards and errors of the policy, and 
+the MSE loss of the constructed $N$.
+\\\\
+Training is completed over epochs.
+An \textit{epoch} is here defined as one pass through the tasks. 
 Each task is trained in episodes where an episode terminates when the constructed
 $N$ has reached 5 layers. This may be more than 5 steps if REML continutes to make 
 errors; in the case of errors, no layer is added to $N$ and REML receives a penalty. 
-The below metrics are gathered per epoch, by task.
-\begin{itemize}
-    \item cumulative MSE loss of $N$ 
-    \item cumulative reward to REML
-    \item cumulative errors made by REML
-\end{itemize}
-Meta-learning performance is evaluted for a task held out at the start of training. 
+\\\\
+Training performance is evaluated over 10 runs to observe variance. Tasks are 
+consistent across runs to enable direct comparison. Each run has a different seed
+to test REML's 
+\section{Meta-learning performance}
+To track meta-learning performance post training, we evaluate the policy on a held
+out evaluation task.
 REML is asked to construct an $N$ for this unseen task. Sample efficiency is evaluated
 comparing training performance over 100 gradient steps for an $N$ from REML and a 
 baseline network trained from scratch. The layers in the baseline network are likewise
@@ -69,20 +107,4 @@ learning is evaluated using $k=5$ and $k=10$ sample datapoints in continuation w
 the protocol proposed by Finn et al.
 
 
-\begin{figure}[htbp]  % Placement options: h (here), t (top), b (bottom), p (page of floats)
-    \centering
-    \includegraphics[width=1.0\textwidth]{RecurrentPPO_1220_16-59/loss_versus_step_training_.png}  % Adjust width as needed
-    \caption{This is a comprehensive caption describing the key aspects of the figure. It should convey essential information for understanding the visual content.}
-    % \label{fig:A} 
-\end{figure}
-\begin{figure}[htbp]  % Placement options: h (here), t (top), b (bottom), p (page of floats)
-    \centering
-    \includegraphics[width=1.0\textwidth]{RecurrentPPO_1220_16-59/loss_versus_step_eval_.png}  % Adjust width as needed
-    \caption{This is a comprehensive caption describing the key aspects of the figure. It should convey essential information for understanding the visual content.}
-    % \label{fig:B} 
-\end{figure}
 
-
-
-
-\minitoc 

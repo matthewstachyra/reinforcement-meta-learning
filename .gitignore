@@ -7,5 +7,4 @@ slurm_scripts/
 /src/bounded-discrete/slurm
 *.wandb
 *.log
-*.json
 *.png
