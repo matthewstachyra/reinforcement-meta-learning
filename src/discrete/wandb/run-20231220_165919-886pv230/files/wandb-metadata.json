@@ -1,0 +1,261 @@
+{
+    "os": "Linux-3.10.0-862.el7.x86_64-x86_64-with-glibc2.17",
+    "python": "3.11.5",
+    "heartbeatAt": "2023-12-20T21:59:20.413387",
+    "startedAt": "2023-12-20T21:59:19.743033",
+    "docker": null,
+    "cuda": null,
+    "args": [
+        "--n_runs",
+        "10",
+        "--epochs",
+        "20",
+        "--timesteps",
+        "1000",
+        "--n_tasks",
+        "7",
+        "--sb3_model=RecurrentPPO",
+        "--sb3_policy=MlpLstmPolicy",
+        "--data_dir=slurm",
+        "--wandb_run=recurrentppo, 10, 20, 1000, 7"
+    ],
+    "state": "running",
+    "program": "/cluster/home/mstach01/code/reinforcement-meta-learning/src/discrete/disc-episode-adding-layers.py",
+    "codePathLocal": "disc-episode-adding-layers.py",
+    "codePath": "src/discrete/disc-episode-adding-layers.py",
+    "git": {
+        "remote": "git@github.com:matthewstachyra/reinforcement-meta-learning.git",
+        "commit": "b707383a3be452c00935160e76da26a19ac9b41e"
+    },
+    "email": "matthew.stachyra@tufts.edu",
+    "root": "/cluster/home/mstach01/code/reinforcement-meta-learning",
+    "host": "c1cmp026.pax.tufts.edu",
+    "username": "mstach01",
+    "executable": "/cluster/home/mstach01/condaenv/mthesis/bin/python",
+    "cpu_count": 20,
+    "cpu_count_logical": 40,
+    "cpu_freq": {
+        "current": 1853.6310999999998,
+        "min": 1200.0,
+        "max": 2200.0
+    },
+    "cpu_freq_per_core": [
+        {
+            "current": 2015.234,
+            "min": 1200.0,
+            "max": 2200.0
+        },
+        {
+            "current": 1933.459,
+            "min": 1200.0,
+            "max": 2200.0
+        },
+        {
+            "current": 1957.092,
+            "min": 1200.0,
+            "max": 2200.0
+        },
+        {
+            "current": 1713.513,
+            "min": 1200.0,
+            "max": 2200.0
+        },
+        {
+            "current": 2003.552,
+            "min": 1200.0,
+            "max": 2200.0
+        },
+        {
+            "current": 1561.108,
+            "min": 1200.0,
+            "max": 2200.0
+        },
+        {
+            "current": 1853.295,
+            "min": 1200.0,
+            "max": 2200.0
+        },
+        {
+            "current": 1722.509,
+            "min": 1200.0,
+            "max": 2200.0
+        },
+        {
+            "current": 1699.279,
+            "min": 1200.0,
+            "max": 2200.0
+        },
+        {
+            "current": 1472.351,
+            "min": 1200.0,
+            "max": 2200.0
+        },
+        {
+            "current": 2199.865,
+            "min": 1200.0,
+            "max": 2200.0
+        },
+        {
+            "current": 2200.134,
+            "min": 1200.0,
+            "max": 2200.0
+        },
+        {
+            "current": 2200.0,
+            "min": 1200.0,
+            "max": 2200.0
+        },
+        {
+            "current": 2043.969,
+            "min": 1200.0,
+            "max": 2200.0
+        },
+        {
+            "current": 2199.06,
+            "min": 1200.0,
+            "max": 2200.0
+        },
+        {
+            "current": 2195.031,
+            "min": 1200.0,
+            "max": 2200.0
+        },
+        {
+            "current": 2173.278,
+            "min": 1200.0,
+            "max": 2200.0
+        },
+        {
+            "current": 2032.958,
+            "min": 1200.0,
+            "max": 2200.0
+        },
+        {
+            "current": 1660.876,
+            "min": 1200.0,
+            "max": 2200.0
+        },
+        {
+            "current": 1665.844,
+            "min": 1200.0,
+            "max": 2200.0
+        },
+        {
+            "current": 1861.621,
+            "min": 1200.0,
+            "max": 2200.0
+        },
+        {
+            "current": 1889.282,
+            "min": 1200.0,
+            "max": 2200.0
+        },
+        {
+            "current": 1562.988,
+            "min": 1200.0,
+            "max": 2200.0
+        },
+        {
+            "current": 2109.631,
+            "min": 1200.0,
+            "max": 2200.0
+        },
+        {
+            "current": 1780.517,
+            "min": 1200.0,
+            "max": 2200.0
+        },
+        {
+            "current": 1927.148,
+            "min": 1200.0,
+            "max": 2200.0
+        },
+        {
+            "current": 1542.443,
+            "min": 1200.0,
+            "max": 2200.0
+        },
+        {
+            "current": 1415.82,
+            "min": 1200.0,
+            "max": 2200.0
+        },
+        {
+            "current": 1834.362,
+            "min": 1200.0,
+            "max": 2200.0
+        },
+        {
+            "current": 1925.537,
+            "min": 1200.0,
+            "max": 2200.0
+        },
+        {
+            "current": 2200.0,
+            "min": 1200.0,
+            "max": 2200.0
+        },
+        {
+            "current": 1934.667,
+            "min": 1200.0,
+            "max": 2200.0
+        },
+        {
+            "current": 1790.991,
+            "min": 1200.0,
+            "max": 2200.0
+        },
+        {
+            "current": 1432.604,
+            "min": 1200.0,
+            "max": 2200.0
+        },
+        {
+            "current": 1886.596,
+            "min": 1200.0,
+            "max": 2200.0
+        },
+        {
+            "current": 1762.524,
+            "min": 1200.0,
+            "max": 2200.0
+        },
+        {
+            "current": 2059.143,
+            "min": 1200.0,
+            "max": 2200.0
+        },
+        {
+            "current": 1546.472,
+            "min": 1200.0,
+            "max": 2200.0
+        },
+        {
+            "current": 1785.888,
+            "min": 1200.0,
+            "max": 2200.0
+        },
+        {
+            "current": 1801.33,
+            "min": 1200.0,
+            "max": 2200.0
+        }
+    ],
+    "disk": {
+        "/": {
+            "total": 24.402141571044922,
+            "used": 2.9667129516601562
+        }
+    },
+    "gpu": "Tesla K20Xm",
+    "gpu_count": 1,
+    "gpu_devices": [
+        {
+            "name": "Tesla K20Xm",
+            "memory_total": 5977800704
+        }
+    ],
+    "memory": {
+        "total": 125.55057144165039
+    }
+}

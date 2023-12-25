@@ -1,0 +1,10 @@
+wandb: Appending key for api.wandb.ai to your netrc file: /cluster/home/mstach01/.netrc
+2023-12-25 06:11:28.767698: I tensorflow/core/platform/cpu_feature_guard.cc:182] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: SSE4.1 SSE4.2 AVX, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+Traceback (most recent call last):
+  File "/cluster/home/mstach01/code/reinforcement-meta-learning/src/discrete/disc-episode-adding-layers.py", line 664, in <module>
+    run(experiments, config)
+  File "/cluster/home/mstach01/code/reinforcement-meta-learning/src/discrete/disc-episode-adding-layers.py", line 574, in run
+    config['run_datetime'] = run_datetime
+    ~~~~~~^^^^^^^^^^^^^^^^
+TypeError: list indices must be integers or slices, not str

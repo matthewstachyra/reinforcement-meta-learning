@@ -51,6 +51,7 @@ def generate_config():
         }
     config['n_pool_hidden_layers'] = config['n_tasks'] * config['n_hidden_layers_per_network']
     return config
+
 default_config = generate_config()
 parser = argparse.ArgumentParser(description="REML command line")
 parser.add_argument("--exp_file", type=str, default=default_config['exp_file'], help="Path to JSON file containing list of dictionaries with experiments")
@@ -657,7 +658,6 @@ def run(config, experiments=None, seed=41):
 
 if __name__ == "__main__":
     args = parser.parse_args() 
-    config = generate_config()
     if args.exp_file:
         with open(args.exp_file, "r") as f:
             experiments = json.load(f)
