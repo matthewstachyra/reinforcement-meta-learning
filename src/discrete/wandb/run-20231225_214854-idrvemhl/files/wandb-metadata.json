@@ -1,0 +1,55 @@
+{
+    "os": "Windows-10-10.0.22621-SP0",
+    "python": "3.11.7",
+    "heartbeatAt": "2023-12-26T02:48:57.231078",
+    "startedAt": "2023-12-26T02:48:54.968881",
+    "docker": null,
+    "cuda": null,
+    "args": [
+        "--exp_file=experiments.json"
+    ],
+    "state": "running",
+    "program": "C:\\Users\\stach\\Documents\\reinforcement-meta-learning\\src\\discrete\\disc-episode-adding-layers.py",
+    "codePathLocal": "disc-episode-adding-layers.py",
+    "codePath": "src\\discrete\\disc-episode-adding-layers.py",
+    "git": {
+        "remote": "git@github.com:matthewstachyra/reinforcement-meta-learning.git",
+        "commit": "4091a8d92c0aa6a9735e558ddc07f99cc416c536"
+    },
+    "email": "matthew.stachyra@tufts.edu",
+    "root": "C:/Users/stach/Documents/reinforcement-meta-learning",
+    "host": "mstach",
+    "username": "stach",
+    "executable": "C:\\Users\\stach\\anaconda3\\envs\\mthesis\\python.exe",
+    "cpu_count": 8,
+    "cpu_count_logical": 16,
+    "cpu_freq": {
+        "current": 2470.0,
+        "min": 0.0,
+        "max": 4001.0
+    },
+    "cpu_freq_per_core": [
+        {
+            "current": 2470.0,
+            "min": 0.0,
+            "max": 4001.0
+        }
+    ],
+    "disk": {
+        "/": {
+            "total": 449.6331214904785,
+            "used": 256.11619567871094
+        }
+    },
+    "gpu": "NVIDIA GeForce RTX 4060 Laptop GPU",
+    "gpu_count": 1,
+    "gpu_devices": [
+        {
+            "name": "NVIDIA GeForce RTX 4060 Laptop GPU",
+            "memory_total": 8585740288
+        }
+    ],
+    "memory": {
+        "total": 15.214054107666016
+    }
+}

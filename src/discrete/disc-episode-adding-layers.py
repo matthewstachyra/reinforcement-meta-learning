@@ -65,6 +65,7 @@ parser.add_argument('--data_dir', '-o', type=str, default=default_config['data_d
 parser.add_argument('--wandb_tag', type=str, default=default_config['wandb_tag'], help='Name of run on wandb', required=False)
 args = parser.parse_args()
 config = { key : getattr(args, key, default_value) for key, default_value in default_config.items() }
+print(f"1 config={config}")
 
 def set_seed(seed=None):
     if seed==None:
@@ -123,7 +124,6 @@ def generate_configs(experiments, base_config=config):
         for key, value in value_dict.items():
             new_config[key] = value 
         configs.append(new_config)
-    print(configs)
     return configs
 
 class LayerPool:
@@ -422,6 +422,8 @@ class InnerNetwork(gymnasium.Env, torch.nn.Module):
         self.next_batch()
         self.train_inner_network()
         return self.build_state(), None
+        
+print(f"2 config={config}")
 
 class REML:
     def __init__(
@@ -521,59 +523,14 @@ class RegressionModel(torch.nn.Module):
         x = self.layers[-1](x)
         return x
 
-def run(experiments, config, seed=41):
-    set_seed(seed)
-    run_datetime = datetime.datetime.now().strftime("%m%d_%H%M")
-    config['run_datetime'] = run_datetime
-    config['wandb_tag'] = f'tuning_{run_datetime}'
-    configs = generate_configs(experiments)
-    path = setup_path(path='tune', run_datetime=run_datetime)
-    wandb.init(
-        project='reinforcement-meta-learning',
-        config=config,
-        name=config['wandb_tag']
-    )
-
-    data, targets, info = generate_tasks()
-    tasks = [InnerNetworkTask(data=data[i], targets=targets[i], info=info[i]) for i in range(config['n_tasks'])]
-    eval_task = random.choice(list(tasks))
-    training_tasks = list(set(tasks) - {eval_task})
-    torch.save(training_tasks, os.path.join(path, f'trainingtasks.pth'))
-    torch.save(eval_task, os.path.join(path, f'evaltask.pth'))
-
-    exp_tasks = defaultdict(lambda: defaultdict(lambda: []))
-    for exp, config in zip(experiments, configs): 
-        pool = LayerPool()
-        reml = REML(tasks=training_tasks, layer_pool=pool, run=exp, config=config)
-        reml.train()
-
-        # save model, layers
-        exp_string = ''.join(f'{key}{value}' for key, value in exp.items())
-        reml.model.save(os.path.join(path, f"model_{exp_string}"))
-        layers = copy.deepcopy(pool.layers)
-        layers.insert(0, pool.initial_input_layer)
-        layers.append(pool.initial_output_layer)
-        torch.save(layers, os.path.join(path, f"layers_{exp_string}.pth"))
-
-        # save cumulative rewards
-        exp_tasks[exp_string] = reml.task_cumureward # { task: [return, return, return, ...] }
-
-    with open(os.path.join(path, f"exp_tasks"), 'w') as json_file:
-        json.dump(exp_tasks, json_file, indent=4)
-
-    with open(os.path.join(path, f"experiments"), 'w') as json_file:
-        json.dump(experiments, json_file, indent=4)
-    
-    return path
-
 def run(config, experiments=None, seed=41):
     set_seed(seed)
-    run_datetime = datetime.datetime.now().strftime("%m%d_%H%M")
-    config['run_datetime'] = run_datetime
-    path = setup_path(path=config['data_dir'], run_datetime=run_datetime)
+    curr_datetime = datetime.datetime.now().strftime("%m%d_%H%M")
+    config['run_datetime'] = curr_datetime
+    path = setup_path(path=config['data_dir'], run_datetime=curr_datetime)
 
     if experiments:
-        config['wandb_tag'] = f'tune_{run_datetime}'
+        config['wandb_tag'] = f'tune_{curr_datetime}'
         configs = generate_configs(experiments)
         data, targets, info = generate_tasks()
         tasks = [InnerNetworkTask(data=data[i], targets=targets[i], info=info[i]) for i in range(config['n_tasks'])]
@@ -609,7 +566,7 @@ def run(config, experiments=None, seed=41):
         with open(os.path.join(path, f"experiments"), 'w') as json_file:
             json.dump(experiments, json_file, indent=4)
     else:
-        config['wandb_tag'] = f'evaluation_{run_datetime}'
+        config['wandb_tag'] = f'evaluation_{curr_datetime}'
         data, targets, info = generate_tasks()
         tasks = [InnerNetworkTask(data=data[i], targets=targets[i], info=info[i]) for i in range(config['n_tasks'])]
         eval_task = random.choice(list(tasks))
@@ -654,10 +611,11 @@ def run(config, experiments=None, seed=41):
     return path
 
 if __name__ == "__main__":
+
     args = parser.parse_args() 
     if args.exp_file:
         with open(args.exp_file, "r") as f:
             experiments = json.load(f)
-            run(experiments, config)
+            run(config, experiments)
     else:
         run(config)
