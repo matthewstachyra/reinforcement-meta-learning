@@ -42,12 +42,13 @@ def generate_config():
         'pool_layer_type' : torch.nn.Linear,
         'batch_size' : 64,
         'learning_rate' : 0.01,
-        'meta_learning_rate' : 0.0003, # 0.01, 0.001, 0.0003
-        'meta_clip_range' : 0.2,       # 0.1, 0.2 (default), 0.3 
-        'meta_n_steps' : 2048,         # 5, 128, 512, 1024, 2048 (default)
+        'meta_learning_rate' : 0.0003,          # 0.01, 0.001, 0.0003
+        'meta_clip_range' : 0.2,                # 0.1, 0.2 (default), 0.3 
+        'meta_n_steps' : 2048,                  # 5, 128, 512, 1024, 2048 (default)
+        'meta_recurrent_n_steps' : 128,         # 5, 128, 512, 1024, 2048 (default)
         'loss_fn' : torch.nn.MSELoss(),
         'sb3_model' : 'PPO',
-        'data_dir' : 'data',
+        'data_dir' : 'evaluation',
         }
     config['n_pool_hidden_layers'] = config['n_tasks'] * config['n_hidden_layers_per_network']
     return config
@@ -62,9 +63,6 @@ parser.add_argument('--timesteps', '-t', type=int, default=default_config['times
 parser.add_argument('--sb3_model',  type=str, default=default_config['sb3_model'], help='SB3 model to use', required=False)
 parser.add_argument('--data_dir', '-o', type=str, default=default_config['data_dir'], help='Directory to save tensorboard logs', required=False)
 parser.add_argument('--wandb_tag', type=str, default=default_config['wandb_tag'], help='Name of run on wandb', required=False)
-parser.add_argument('--meta_learning_rate', type=float, default=default_config['meta_learning_rate'], help='Learning rate', required=False)
-parser.add_argument('--meta_clip_range', type=float, default=default_config['meta_clip_range'], help='Clip range', required=False)
-parser.add_argument('--meta_n_steps', type=int, default=default_config['meta_n_steps'], help='Horizon', required=False)
 args = parser.parse_args()
 config = { key : getattr(args, key, default_value) for key, default_value in default_config.items() }
 
@@ -452,7 +450,7 @@ class REML:
                 'MlpLstmPolicy', 
                 dummy_env, 
                 seed=config['seed'], 
-                n_steps=config['meta_n_steps'], 
+                n_steps=config['meta_recurrent_n_steps'], 
                 learning_rate=config['meta_learning_rate'],
                 clip_range=config['meta_clip_range'],
                 )
@@ -572,9 +570,9 @@ def run(config, experiments=None, seed=41):
     set_seed(seed)
     run_datetime = datetime.datetime.now().strftime("%m%d_%H%M")
     config['run_datetime'] = run_datetime
+    path = setup_path(path=config['data_dir'], run_datetime=run_datetime)
 
     if experiments:
-        path = setup_path(path='tune', run_datetime=run_datetime)
         config['wandb_tag'] = f'tune_{run_datetime}'
         configs = generate_configs(experiments)
         data, targets, info = generate_tasks()
@@ -611,14 +609,13 @@ def run(config, experiments=None, seed=41):
         with open(os.path.join(path, f"experiments"), 'w') as json_file:
             json.dump(experiments, json_file, indent=4)
     else:
-        path = setup_path(path='evaluation', run_datetime=run_datetime)
+        config['wandb_tag'] = f'evaluation_{run_datetime}'
         data, targets, info = generate_tasks()
         tasks = [InnerNetworkTask(data=data[i], targets=targets[i], info=info[i]) for i in range(config['n_tasks'])]
         eval_task = random.choice(list(tasks))
         training_tasks = list(set(tasks) - {eval_task})
         torch.save(training_tasks, os.path.join(path, f'trainingtasks.pth'))
         torch.save(eval_task, os.path.join(path, f'evaltask.pth'))
-        config['wandb_tag'] = f'evaluation_{run_datetime}'
         wandb.init(
             project='reinforcement-meta-learning',
             config=config,
