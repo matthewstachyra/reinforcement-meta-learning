@@ -16,6 +16,6 @@ module load cuda/11.7
 module load cudnn/8.9.5-11.x
 source activate mthesis
 wandb login "eaa09efc618b8de89f1aaf350442d4ee69be3cf5"
-python disc-episode-adding-layers.py --n_runs 1 --epochs 20 --timesteps 500 --n_tasks 7 --exp_file="experiments.json" 
+python disc-episode-adding-layers.py --n_runs 1 --epochs 20 --timesteps 500 --n_tasks 7 --exp_file="experiments.json" --data_dir="tune"
 
 exit 
