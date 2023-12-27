@@ -1,0 +1,53 @@
+{
+    "os": "Windows-10-10.0.22621-SP0",
+    "python": "3.11.7",
+    "heartbeatAt": "2023-12-27T03:20:36.415050",
+    "startedAt": "2023-12-27T03:20:35.335139",
+    "docker": null,
+    "cuda": null,
+    "args": [],
+    "state": "running",
+    "program": "C:\\Users\\stach\\Documents\\reinforcement-meta-learning\\src\\discrete\\evaluation.py",
+    "codePathLocal": "evaluation.py",
+    "codePath": "src\\discrete\\evaluation.py",
+    "git": {
+        "remote": "git@github.com:matthewstachyra/reinforcement-meta-learning.git",
+        "commit": "e6c8ea757bc5fced87042360add7aa05040fcbe7"
+    },
+    "email": "matthew.stachyra@tufts.edu",
+    "root": "C:/Users/stach/Documents/reinforcement-meta-learning",
+    "host": "mstach",
+    "username": "stach",
+    "executable": "C:\\Users\\stach\\anaconda3\\envs\\mthesis\\python.exe",
+    "cpu_count": 8,
+    "cpu_count_logical": 16,
+    "cpu_freq": {
+        "current": 4001.0,
+        "min": 0.0,
+        "max": 4001.0
+    },
+    "cpu_freq_per_core": [
+        {
+            "current": 4001.0,
+            "min": 0.0,
+            "max": 4001.0
+        }
+    ],
+    "disk": {
+        "/": {
+            "total": 449.6331214904785,
+            "used": 256.4949493408203
+        }
+    },
+    "gpu": "NVIDIA GeForce RTX 4060 Laptop GPU",
+    "gpu_count": 1,
+    "gpu_devices": [
+        {
+            "name": "NVIDIA GeForce RTX 4060 Laptop GPU",
+            "memory_total": 8585740288
+        }
+    ],
+    "memory": {
+        "total": 15.214054107666016
+    }
+}

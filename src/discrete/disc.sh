@@ -5,8 +5,8 @@
 #SBATCH -N 1                               
 #SBATCH -n 2                                
 #SBATCH --mem=64g                            
-#SBATCH --output=evaluation/${SLURM_JOB_NAME}.%j.%N.out
-#SBATCH --error=evaluation/${SLURM_JOB_NAME}.%j.%N.err   
+#SBATCH --output=evaluation/"$1".%j.%N.out
+#SBATCH --error=evaluation/"$1".%j.%N.err   
 #SBATCH --mail-type=ALL                     
 #SBATCH --mail-user=matthew.stachyra@tufts.edu
 
