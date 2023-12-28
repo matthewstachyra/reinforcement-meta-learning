@@ -18,5 +18,5 @@
     {"meta_recurrent_n_steps": 5, "sb3_model" : "RecurrentPPO"},
     {"meta_recurrent_n_steps": 128, "sb3_model" : "RecurrentPPO"},
     {"meta_recurrent_n_steps": 512, "sb3_model" : "RecurrentPPO"},
-    {"meta_recurrent_n_steps": 2048, "sb3_model" : "RecurrentPPO"}
+    {"meta_recurrent_n_steps": 1024, "sb3_model" : "RecurrentPPO"}
 ]
